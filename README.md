@@ -8,9 +8,33 @@ This repository contains a small end-to-end development environment for a creden
 
 Goal: provide a reproducible dev workflow so another developer (or CI runner) can start local subnets, deploy mock Teleporter, deploy onchain contracts to multiple subnets, generate shared artifacts, fund a relayer, and run a simple integration simulation.
 
+## Current Implementation Status
+
+### ✅ Completed
+- Basic smart contract structure (IdentityRegistry, VerificationAttestor, CrossChainRouter)
+- Multi-network deployment scripts
+- Local subnet management utilities
+- Teleporter mock integration
+- Comprehensive documentation and setup guides
+
+### 🚧 In Progress
+- ReputationOracle smart contract
+- FeeToken implementation
+- Shared artifacts generation system
+- Integration testing framework
+
+### ❌ Not Yet Implemented
+- Frontend application (Module 3)
+- EERC encryption integration
+- Jurisdiction-specific compliance validation
+- Automated re-attestation workflows
+- Enterprise API endpoints
+- Off-chain document vault
+
 Table of Contents
 - Requirements
 - Quickstart (fast path)
+- Implementation roadmap
 - Detailed setup (recommended for reproducible runs)
 - Commands & scripts reference
 - Environment variables
@@ -31,6 +55,32 @@ Table of Contents
 - Git and a POSIX-compatible shell (bash)
 
 Note: CI runners can set up the same environment by installing Node and the Avalanche CLI. This README provides explicit commands to re-create the local environment.
+
+## Implementation Roadmap
+
+### Phase 1: Core Infrastructure (Current)
+- [x] Local subnet deployment and management
+- [x] Basic smart contracts with cross-chain messaging
+- [x] Deployment automation scripts
+- [ ] Complete shared artifacts system
+
+### Phase 2: Enterprise Features (Next)
+- [ ] ReputationOracle and multi-verifier attestations
+- [ ] EERC integration for encrypted data
+- [ ] Jurisdiction-specific compliance validation
+- [ ] Fee token and sponsored transaction system
+
+### Phase 3: Frontend and APIs (Future)
+- [ ] React/Next.js dashboard application
+- [ ] RESTful API for enterprise integration
+- [ ] Off-chain document vault (S3/IPFS)
+- [ ] Automated re-attestation workflows
+
+### Phase 4: Production Readiness (Future)
+- [ ] Security audits and penetration testing
+- [ ] Performance optimization and load testing
+- [ ] Regulatory compliance certification
+- [ ] Enterprise deployment templates
 
 ## Quickstart (fast path)
 
@@ -123,6 +173,25 @@ npx ts-node scripts/integration-sim.ts
 The integration sim will attempt a small end-to-end flow and print tx receipts.
 
 ---
+
+## Known Limitations and Missing Components
+
+### Smart Contracts
+- **ReputationOracle**: Referenced in deploy-multi.ts but contract file doesn't exist
+- **FeeToken**: Used in deployment but implementation missing
+- **EERC Integration**: Encryption features not yet implemented
+- **Jurisdiction Validation**: No actual GDPR/compliance logic in contracts
+
+### Infrastructure
+- **Shared Artifacts System**: Incomplete implementation of shared/ directory
+- **Permissioned Subnet Templates**: Basic templates exist but lack jurisdiction-specific features
+- **Automated Re-attestation**: Workflow not implemented
+
+### Frontend/API (Module 3)
+- **React Dashboard**: Not yet implemented
+- **Enterprise API**: Missing RESTful endpoints
+- **Document Vault**: Off-chain storage not implemented
+- **Wallet Integration**: Core Wallet/MetaMask integration pending
 
 ## Detailed setup (recommended for reproducible runs / CI)
 
@@ -252,18 +321,35 @@ Security considerations:
 - RPC 404s: ensure RPC path uses `/ext/bc/C/rpc`. The `infra/endpoints.json` uses this path by default.
 - Insufficient funds when sending AVAX: check funder balance and lower `FUND_AMOUNT`. The `fund-relayer.ts` logs the funder's balance before sending.
 - Hardhat artifact not found: ensure you ran `npx hardhat compile` (or run the `deploy-multi.ts` script from `onchain/` which triggers compilation).
+- Missing contract errors: Some contracts referenced in deploy-multi.ts are not yet implemented (ReputationOracle, FeeToken).
 
 ---
 
 ## Next steps / extension ideas
 
-- Implement the `infra/api/` HTTP server and a small `infra/api/README.md` with example cURL or SDK usage.
-- Add lightweight integration tests that:
-  1. start subnets (headless),
-  2. deploy teleporter and onchain contracts,
-  3. run the integration sim,
-  4. assert token/state changes.
-- Add CI pipeline steps to start a Dockerized Avalanche node (or use a prebuilt image) so CI doesn't install the CLI on the runner.
+### Immediate (Phase 1 completion)
+- Implement missing smart contracts (ReputationOracle.sol, FeeToken.sol)
+- Complete shared artifacts generation system
+- Add comprehensive integration tests
+- Fix deploy-multi.ts to handle missing contracts gracefully
+
+### Short-term (Phase 2)
+- Implement EERC encryption integration for sensitive data
+- Add jurisdiction-specific validation logic
+- Create permissioned subnet templates with compliance features
+- Develop sponsored transaction system with fee tokens
+
+### Medium-term (Phase 3)
+- Build React/Next.js frontend application
+- Implement RESTful API with proper authentication
+- Create off-chain document vault with S3/IPFS integration
+- Add automated re-attestation workflows
+
+### Long-term (Phase 4)
+- Conduct security audits and penetration testing
+- Performance optimization and load testing
+- Regulatory compliance certification
+- Enterprise deployment templates and AvaCloud integration
 
 ---
 

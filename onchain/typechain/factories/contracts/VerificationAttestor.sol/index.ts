@@ -2,5 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export { IReputationOracle__factory } from "./IReputationOracle__factory";
-export { ReputationOracle__factory } from "./ReputationOracle__factory";
 export { VerificationAttestor__factory } from "./VerificationAttestor__factory";

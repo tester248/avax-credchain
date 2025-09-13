@@ -69,10 +69,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IReputationOracle__factory>;
     getContractFactory(
-      name: "ReputationOracle",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ReputationOracle__factory>;
-    getContractFactory(
       name: "VerificationAttestor",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.VerificationAttestor__factory>;
@@ -147,11 +143,6 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IReputationOracle>;
-    getContractAt(
-      name: "ReputationOracle",
-      address: string,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ReputationOracle>;
     getContractAt(
       name: "VerificationAttestor",
       address: string,

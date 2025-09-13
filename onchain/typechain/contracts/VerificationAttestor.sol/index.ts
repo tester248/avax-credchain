@@ -2,5 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { IReputationOracle } from "./IReputationOracle";
-export type { ReputationOracle } from "./ReputationOracle";
 export type { VerificationAttestor } from "./VerificationAttestor";

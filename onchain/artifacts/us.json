@@ -1,9 +1,11 @@
 {
   "teleporter": "0x565497a1B67adc1305806804b5A93C44C545CbDC",
-  "router": "0xbb548A8c342f286FeE5DeA3de15DB170a4282deE",
-  "identityRegistry": "0xeFf8BF7f6F5FA120bd438602B50AAF24c339B328",
-  "attestor": "0xa41CBa063173a8f1AB06182EB664300D1839B3B7",
-  "deployer": "0x58155273dfCe2e0D931cb38db80123678229c07B",
+  "router": "0x8B3BC4270BE2abbB25BC04717830bd1Cc493a461",
+  "identityRegistry": "0x7B4982e1F7ee384F206417Fb851a1EB143c513F9",
+  "attestor": "0xB8a934dcb74d0E3d1DF6Bce0faC12cD8B18801eD",
+  "oracle": "0x55a4eDd8A2c051079b426E9fbdEe285368824a89",
+  "feeToken": "0xa1E47689f396fED7d18D797d9D31D727d2c0d483",
+  "deployer": "0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC",
   "rpc": "http://127.0.0.1:9650/ext/bc/C/rpc",
   "chainId": "1337001",
   "abis": {

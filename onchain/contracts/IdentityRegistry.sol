@@ -44,4 +44,86 @@ contract IdentityRegistry is AccessControl {
         Identity storage id = identities[user];
         return (id.jurisdiction, id.ipfsCid, id.consent);
     }
+
+    // EERC Encryption Support
+    mapping(address => mapping(string => string)) private encryptedData;
+    mapping(address => string[]) private encryptedFields;
+    
+    event EncryptedDataStored(
+        address indexed user,
+        string indexed fieldName,
+        uint256 timestamp
+    );
+    
+    event EncryptedDataAccessed(
+        address indexed user,
+        address indexed accessor,
+        string indexed fieldName,
+        uint256 timestamp
+    );
+    
+    /**
+     * Store encrypted data for a user
+     * @param user The user address
+     * @param fieldName The field being encrypted (e.g., "ssn", "medicalLicense")
+     * @param encryptedPayload The EERC-encrypted data
+     */
+    function storeEncryptedData(
+        address user,
+        string memory fieldName,
+        string memory encryptedPayload
+    ) external onlyRole(HR_ROLE) {
+        require(identities[user].user != address(0), "Identity not registered");
+        
+        // Store encrypted data
+        encryptedData[user][fieldName] = encryptedPayload;
+        
+        // Track encrypted fields for this user
+        bool fieldExists = false;
+        for (uint i = 0; i < encryptedFields[user].length; i++) {
+            if (keccak256(abi.encodePacked(encryptedFields[user][i])) == keccak256(abi.encodePacked(fieldName))) {
+                fieldExists = true;
+                break;
+            }
+        }
+        
+        if (!fieldExists) {
+            encryptedFields[user].push(fieldName);
+        }
+        
+        emit EncryptedDataStored(user, fieldName, block.timestamp);
+    }
+    
+    /**
+     * Retrieve encrypted data (only by authorized roles)
+     * @param user The user address
+     * @param fieldName The encrypted field name
+     */
+    function getEncryptedData(
+        address user,
+        string memory fieldName
+    ) external view onlyRole(DEFAULT_ADMIN_ROLE) returns (string memory) {
+        require(identities[user].user != address(0), "Identity not registered");
+        return encryptedData[user][fieldName];
+    }
+    
+    /**
+     * Get list of encrypted fields for a user
+     */
+    function getEncryptedFields(address user) external view returns (string[] memory) {
+        require(
+            identities[user].user != address(0) || 
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
+            "Not authorized"
+        );
+        return encryptedFields[user];
+    }
+    
+    /**
+     * Check if user has encrypted data
+     */
+    function hasEncryptedData(address user) external view returns (bool) {
+        return encryptedFields[user].length > 0;
+    }
+
 }

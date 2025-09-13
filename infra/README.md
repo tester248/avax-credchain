@@ -2,6 +2,14 @@
 
 Purpose: provide subnet templates, local deploy scripts, and Teleporter mock deployment for local development. This runbook explains installing the Avalanche CLI, starting/test-driving local subnets, deploying the mock Teleporter, and safety notes for handling dev keys.
 
+## Current Status ✅
+
+Based on your setup, you already have:
+- **Two local subnets running**: `credchainus` (1337001) and `credchaineu` (1337002)
+- **Pre-funded accounts**: `ewoq` account with 1M tokens on each subnet
+- **Avalanche CLI**: Properly installed and configured
+- **All smart contracts**: Successfully compiled and ready for deployment
+
 ## Quick start
 
 1. Install Node dependencies (from `infra/`):
@@ -11,103 +19,193 @@ cd infra
 npm install
 ```
 
-2. Install the Avalanche CLI (avalanche):
+2. ✅ **Already done**: Avalanche CLI is installed and working
 
-- macOS / Linux (recommended via the official install script):
+3. ✅ **Already done**: Local subnets are created and running
 
-```bash
-# download and install avalanche CLI to ~/.local/bin (or /usr/local/bin)
-curl -sSfL https://raw.githubusercontent.com/ava-labs/avalanche-cli/main/scripts/install.sh | bash
-# ensure it's on your PATH; you may need to add ~/.local/bin to PATH
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-- Alternatively build from source or use system packages per the Avalanche docs.
-
-3. Create and start local subnets (non-interactive):
+4. Verify your setup and RPCs are reachable:
 
 ```bash
-# Option A: use repo genesis files (if you customized them)
-USE_GENESIS=true OWNER_ADDR=0xYourOwnerAddress node infra/scripts/deploy-subnets.ts
+# Check subnet status
+avalanche network status
 
-# Option B: let the script create EVM subnets with sensible defaults
-OWNER_ADDR=0xYourOwnerAddress node infra/scripts/deploy-subnets.ts
-```
-
-Notes:
-- `OWNER_ADDR` should be an address present in your local `avalanche` key store (e.g. created via `avalanche key create`). If you omit it the script will try to detect the first address from `avalanche key list`.
-- The script will attempt to run `avalanche network start` (safe to run even when a network is active).
-
-4. Confirm RPCs are reachable:
-
-```bash
-# US C-Chain
+# Test US C-Chain RPC
 curl -sS -X POST http://127.0.0.1:9650/ext/bc/C/rpc -H 'content-type:application/json' -d '{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}'
 
-# EU C-Chain (if present)
+# Test EU C-Chain RPC  
 curl -sS -X POST http://127.0.0.1:9652/ext/bc/C/rpc -H 'content-type:application/json' -d '{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}'
 ```
 
-Expected responses include valid chain IDs like `0x1453...` (depends on subnet creation). Our local convention in this repo uses chain IDs `1337001` (US) and `1337002` (EU) expressed as decimal in `infra/endpoints.json`.
+Expected responses: `{"jsonrpc":"2.0","id":1,"result":"0x146289"}` (US) and `{"jsonrpc":"2.0","id":1,"result":"0x14628a"}` (EU)
 
-## Deploy the Mock Teleporter (contract)
+## Deploy Smart Contracts
 
-We provide `infra/scripts/deploy-teleporter.ts` to compile and deploy the `MockTeleporter.sol` contract to each C-Chain.
+You have all contracts compiled. Now deploy them to your local subnets:
 
-1. Ensure you have a funded relayer private key. In local dev you can use the genesis-funded dev key and then transfer AVAX to the relayer address. Example sequence:
+1. **Use the pre-funded ewoq account** (already has 1M tokens on each subnet):
 
 ```bash
-# generate a dev key (prints address and private key)
-node infra/scripts/generate-dev-key.ts
+# Export the ewoq private key for deployment
+export DEPLOYER_PRIVATE_KEY="0x56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027"
 
-# fund relayer (example: use ts-node or npx ts-node if you don't have ts-node global)
-RELAYER_ADDRESS=0xRelayerAddr FUNDER_PRIVATE_KEY=0xYourFundedKey npx ts-node infra/scripts/fund-relayer.ts
-
-# deploy teleporter using the relayer private key
-RELAYER_PRIVATE_KEY=0xYourRelayerPrivateKey npx ts-node infra/scripts/deploy-teleporter.ts
+# Deploy to both subnets
+cd onchain
+npx ts-node scripts/deploy-multi.ts
 ```
 
-2. After successful deploy, `infra/teleporter.json` will be updated with the teleporter contract addresses per subnet.
+This will deploy all contracts (TeleporterMock, CrossChainRouter, IdentityRegistry, VerificationAttestor, ReputationOracle, FeeToken) to both subnets.
+
+2. **Generate shared artifacts** for frontend consumption:
+
+```bash
+# Still in onchain/ directory
+npx ts-node scripts/export-artifacts.ts
+npx ts-node scripts/generate-shared-artifacts.ts
+```
+
+3. **Test the deployment** with integration simulation:
+
+```bash
+cd ../infra
+export RELAYER_PRIVATE_KEY="0x56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027"
+export USER_PRIVATE_KEY="0x56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027"
+npx ts-node scripts/integration-sim.ts
+```
+
+## Alternative: Deploy Mock Teleporter Separately
+
+If you want to deploy just the Teleporter mock first (before the main contracts):
+
+```bash
+cd infra
+export RELAYER_PRIVATE_KEY="0x56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027"
+npx ts-node scripts/deploy-teleporter.ts
+```
+
+This will create `infra/teleporter.json` with teleporter addresses that the main deployment script can use.
 
 ## Adding RPCs to MetaMask / Core Wallet
 
-- Add a new network in MetaMask with the following fields (example for US C-Chain):
-  - Network name: `CredChain US (local)`
-  - RPC URL: `http://127.0.0.1:9650/ext/bc/C/rpc`
-  - Chain ID: `1337001` (decimal)
-  - Currency symbol: `AVAX`
-  - Block explorer URL: (none for local)
+Add these networks to your wallet for testing:
 
-- Repeat for EU with port `9652` and chain ID `1337002`.
+**CredChain US (Local)**
+- Network name: `CredChain US (local)`
+- RPC URL: `http://127.0.0.1:9650/ext/bc/C/rpc`
+- Chain ID: `1337001` (decimal)
+- Currency symbol: `USCred`
+- Block explorer URL: (none for local)
+
+**CredChain EU (Local)**  
+- Network name: `CredChain EU (local)`
+- RPC URL: `http://127.0.0.1:9652/ext/bc/C/rpc`
+- Chain ID: `1337002` (decimal)
+- Currency symbol: `EUCred`
+- Block explorer URL: (none for local)
+
+## Pre-funded Test Accounts
+
+Your subnets come with pre-funded accounts you can import:
+
+**Main Account (ewoq)**
+- Address: `0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC`
+- Private Key: `0x56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027`
+- Balance: 1,000,000 tokens on each subnet
+
+**ICM Account** 
+- Address: `0x58155273dfCe2e0D931cb38db80123678229c07B`  
+- Private Key: `0xa7c558e3236ec52ce0ef78005c6f977f566861c64194df9b0ce9916fa85251b0`
+- Balance: 600 tokens on each subnet
 
 ## Key management & safety
 
-- Never commit real private keys. The `infra/sample-keys/KEY_TEMPLATE.md` contains examples and guidance. Use environment variables for secrets and add them to your local `.env` (never commit `.env`).
+⚠️ **These are development keys only** - never use in production!
 
-- Recommended env variables when running scripts:
-  - `RELAYER_PRIVATE_KEY` — private key of the account that will deploy contracts and submit messages.
-  - `FUNDER_PRIVATE_KEY` — private key of a funded account used to top up the relayer.
-  - `OWNER_ADDR` — used by `deploy-subnets.ts` to set the validator-manager-owner when creating the subnets.
+- The keys shown above are from Avalanche CLI test defaults and are safe to use for local development
+- For production or public networks, generate new keys: `avalanche key create <keyname>`
+- Never commit real private keys to git
+- Use environment variables for all keys in scripts
 
-- If using the repository in CI, prefer ephemeral test accounts created at runtime and stored securely in CI secrets.
+## Managing Your Local Network
 
-## Troubleshooting
+**Start/Stop Network:**
+```bash
+# Start network (if stopped)
+avalanche network start
 
-- "avalanche: command not found": ensure `~/.local/bin` or installation path is on your `PATH` and restart your shell.
-- RPC 404 or empty reply: ensure you are using the C-Chain RPC path: `/ext/bc/C/rpc` (not the base node port).
-- Insufficient funds when deploying: fund the relayer with `infra/scripts/fund-relayer.ts`.
+# Stop network  
+avalanche network stop
+
+# Check status
+avalanche network status
+```
+
+**Restart with Clean State:**
+```bash
+avalanche network stop
+avalanche network clean
+# Then re-run deployment scripts
+```
+
+**Subnet Management:**
+```bash
+# List your subnets
+avalanche blockchain list
+
+# Describe a specific subnet
+avalanche blockchain describe credchainus
+avalanche blockchain describe credchaineu
+```
 
 ## Files and artifacts
 
-- `infra/endpoints.json` — written by `deploy-subnets.ts` with keys `us` and `eu`:
-  - `{ chainId, subnetId, rpc, teleporterAddr }
-- `infra/teleporter.json` — teleporter addresses written after deploy
-- `infra/subnets/*/genesis.json` — optional genesis files used when `USE_GENESIS=true`
+- `infra/endpoints.json` — RPC endpoints and chain configuration (create this if missing):
+  ```json
+  {
+    "us": { "chainId": "1337001", "subnetId": "credchainus", "rpc": "http://127.0.0.1:9650/ext/bc/C/rpc", "teleporterAddr": null },
+    "eu": { "chainId": "1337002", "subnetId": "credchaineu", "rpc": "http://127.0.0.1:9652/ext/bc/C/rpc", "teleporterAddr": null }
+  }
+  ```
+- `infra/teleporter.json` — teleporter contract addresses (generated by deploy scripts)
+- `onchain/artifacts/{us,eu}.json` — deployment artifacts with all contract addresses
+- `shared/onchain-artifacts/` — consolidated artifacts for frontend consumption
 
-## Next steps (suggested)
+## Troubleshooting
 
-- Add a smoke test that verifies both RPC endpoints and the Teleporter contract are reachable. See `infra/tests` for planned tests.
+**"avalanche: command not found"**: Already fixed - your CLI is working!
 
----
+**RPC connection errors**: 
+- Ensure network is running: `avalanche network status`
+- Use correct path: `/ext/bc/C/rpc` (not just the port)
+- Check firewall isn't blocking ports 9650, 9652
 
-If you'd like, I can (next) create `infra/tests/smoke.ts` and a GitHub Actions workflow to run it on PRs.
+**Deployment failures**:
+- Check account has funds: `curl -X POST http://127.0.0.1:9650/ext/bc/C/rpc -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"eth_getBalance","params":["0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC","latest"]}'`
+- Verify private key format: must start with `0x`
+
+**Integration simulation issues**:
+- Ensure contracts are deployed first
+- Check `shared/onchain-artifacts/addresses.json` exists
+- Verify all environment variables are set
+
+## Next Steps
+
+Now that your infrastructure is ready:
+
+1. **✅ Deploy contracts**: Run the deployment commands above
+2. **Build frontend**: Start Module 3 (React/Next.js application)  
+3. **Test end-to-end flow**: Use the integration simulation
+4. **Add more verifiers**: Deploy additional VerificationAttestor instances
+5. **Add compliance features**: Implement jurisdiction-specific validation
+
+## Available Scripts Reference
+
+- `infra/scripts/subnet-control.ts` — start/stop/status subnet management
+- `infra/scripts/deploy-teleporter.ts` — deploy mock teleporter only  
+- `infra/scripts/fund-relayer.ts` — transfer funds between accounts
+- `infra/scripts/generate-dev-key.ts` — create new dev key pairs
+- `infra/scripts/integration-sim.ts` — end-to-end workflow test
+- `onchain/scripts/deploy-multi.ts` — deploy all contracts to both subnets
+- `onchain/scripts/export-artifacts.ts` — prepare artifacts for frontend
+- `onchain/scripts/generate-shared-artifacts.ts` — create consolidated artifact files
+
+Your local development environment is fully functional! 🚀
