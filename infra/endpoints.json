@@ -1,0 +1,14 @@
+{
+  "us": {
+    "chainId": "1337001",
+    "subnetId": "credchainus",
+  "rpc": "http://127.0.0.1:9650/ext/bc/C/rpc",
+    "teleporterAddr": null
+  },
+  "eu": {
+    "chainId": "1337002",
+    "subnetId": "credchaineu",
+  "rpc": "http://127.0.0.1:9652/ext/bc/C/rpc",
+    "teleporterAddr": null
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "networkID": 1337,
+  "chainName": "credchain-us",
+  "chainId": "0xCCUS",
+  "tokenName": "USCred",
+  "consentFlags": {
+    "piiStorage": "eerc-enabled",
+    "consentRequired": true
+  },
+  "validatorMetadata": {
+    "geofencing": "US",
+    "notes": "Replace with production validator metadata"
+  },
+  "validators": [
+    {
+      "nodeID": "NodeID-placeholder",
+      "stake": 2000000000,
+      "rewardAddress": "0x0000000000000000000000000000000000000000",
+      "keyPath": "../sample-keys/dev-us-key.pem"
+    }
+  ]
+}

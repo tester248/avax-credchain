@@ -1,0 +1,22 @@
+{
+  "networkID": 1338,
+  "chainName": "credchain-eu",
+  "chainId": "0xCCEU",
+  "tokenName": "EUCred",
+  "consentFlags": {
+    "piiStorage": "restricted",
+    "consentRequired": true
+  },
+  "validatorMetadata": {
+    "geofencing": "EU",
+    "notes": "Validators must be in EU jurisdictions"
+  },
+  "validators": [
+    {
+      "nodeID": "NodeID-placeholder",
+      "stake": 2000000000,
+      "rewardAddress": "0x0000000000000000000000000000000000000000",
+      "keyPath": "../sample-keys/dev-eu-key.pem"
+    }
+  ]
+}
