@@ -1,0 +1,192 @@
+{
+  "CrossChainRouter.sol_CrossChainRouter.dbg": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "CrossChainRouter.sol_CrossChainRouter": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "FeeToken.sol_FeeToken.dbg": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "FeeToken.sol_FeeToken": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "ITeleporter.sol_ITeleporter.dbg": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "ITeleporter.sol_ITeleporter": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "IdentityRegistry.sol_IdentityRegistry.dbg": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "IdentityRegistry.sol_IdentityRegistry": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "ReputationOracle.sol_ReputationOracle.dbg": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "ReputationOracle.sol_ReputationOracle": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "TeleporterMock.sol_TeleporterMock.dbg": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "TeleporterMock.sol_TeleporterMock": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "VerificationAttestor.sol_IReputationOracle.dbg": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "VerificationAttestor.sol_IReputationOracle": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "VerificationAttestor.sol_VerificationAttestor.dbg": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "VerificationAttestor.sol_VerificationAttestor": {
+    "teleporter": null,
+    "router": null,
+    "identityRegistry": null,
+    "attestor": null,
+    "feeToken": null,
+    "deployer": null,
+    "rpc": null,
+    "chainId": null
+  },
+  "eu": {
+    "teleporter": "0x7632DD35AeaFC5A4a1AAA36493B7F8E4D84B15E2",
+    "router": "0x745657C61b7C52426B9B90Fb137f14D297cecD58",
+    "identityRegistry": "0xA8C0cfe79b862624c859882b4d55F93A38c3265B",
+    "attestor": "0xa2f5732d4B1eF7C9953323c676B219E9E001FF03",
+    "feeToken": null,
+    "deployer": "0x58155273dfCe2e0D931cb38db80123678229c07B",
+    "rpc": "http://127.0.0.1:9652/ext/bc/C/rpc",
+    "chainId": "1337002"
+  },
+  "local": {
+    "teleporter": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "router": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    "identityRegistry": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+    "attestor": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+    "feeToken": null,
+    "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "rpc": null,
+    "chainId": null
+  },
+  "us": {
+    "teleporter": "0x565497a1B67adc1305806804b5A93C44C545CbDC",
+    "router": "0xbb548A8c342f286FeE5DeA3de15DB170a4282deE",
+    "identityRegistry": "0xeFf8BF7f6F5FA120bd438602B50AAF24c339B328",
+    "attestor": "0xa41CBa063173a8f1AB06182EB664300D1839B3B7",
+    "feeToken": null,
+    "deployer": "0x58155273dfCe2e0D931cb38db80123678229c07B",
+    "rpc": "http://127.0.0.1:9650/ext/bc/C/rpc",
+    "chainId": "1337001"
+  }
+}

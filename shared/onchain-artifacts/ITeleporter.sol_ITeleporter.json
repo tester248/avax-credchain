@@ -1,0 +1,35 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "ITeleporter",
+  "sourceName": "contracts/ITeleporter.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "destinationChainId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "payload",
+          "type": "bytes"
+        }
+      ],
+      "name": "sendMessage",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
