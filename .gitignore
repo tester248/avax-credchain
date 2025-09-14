@@ -1,2 +1,5 @@
 infra/node_modules
 onchain/node_modules
+.env
+module3-api/node_modules
+module3-ui/node_modules

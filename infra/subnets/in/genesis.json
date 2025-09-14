@@ -1,0 +1,22 @@
+{
+  "networkID": 1339,
+  "chainName": "credchain-in",
+  "chainId": "0xCCIN",
+  "tokenName": "INCred",
+  "consentFlags": {
+    "piiStorage": "restricted",
+    "consentRequired": true
+  },
+  "validatorMetadata": {
+    "geofencing": "IN",
+    "notes": "Validators should be hosted in India for data residency"
+  },
+  "validators": [
+    {
+      "nodeID": "NodeID-placeholder",
+      "stake": 2000000000,
+      "rewardAddress": "0x0000000000000000000000000000000000000000",
+      "keyPath": "../sample-keys/dev-in-key.pem"
+    }
+  ]
+}

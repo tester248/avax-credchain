@@ -1,0 +1,23 @@
+
+> module3-api@0.1.0 dev
+> ts-node-dev --respawn --transpile-only src/index.ts
+
+[INFO] 23:44:00 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.4.2)
+Module3 API listening on port 4000
+[INFO] 23:44:34 Restarting: /workspaces/avax-credchain/module3-api/src/routes/relayer.ts has been modified
+Module3 API listening on port 4000
+[INFO] 23:45:15 Restarting: /workspaces/avax-credchain/module3-api/src/routes/relayer.ts has been modified
+Module3 API listening on port 4000
+relayer: recovery candidates [ 'verifyMessage=arrayify:0xC0eE131215b31c43CCBE6CA79350DDbcd9AFF81a' ]
+[INFO] 23:46:44 Restarting: /workspaces/avax-credchain/module3-api/src/routes/relayer.ts has been modified
+Module3 API listening on port 4000
+relayer: recovery candidates [ 'verifyMessage=arrayify:0x0De8652f2A687bE1C924B239514A670bf669B6AB' ]
+[INFO] 23:48:15 Restarting: /workspaces/avax-credchain/module3-api/src/routes/relayer.ts has been modified
+Module3 API listening on port 4000
+relayer: recovery candidates [ 'verifyMessage=arrayify:0x9DEB10b6D431a7A72beE215A4F25691bD36d736b' ]
+relayer: signature recovered address does not match userAddress, accepting job as unverified {
+  recovered: '0x9DEB10b6D431a7A72beE215A4F25691bD36d736b',
+  userAddress: '0x3328403dB77E5914009F5416920176686d4ee9A2'
+}
+[INFO] 00:01:37 Restarting: /workspaces/avax-credchain/module3-api/src/routes/relayer.ts has been modified
+Module3 API listening on port 4000

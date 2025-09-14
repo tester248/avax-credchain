@@ -73,7 +73,7 @@ contract IdentityRegistry is AccessControl {
         string memory fieldName,
         string memory encryptedPayload
     ) external onlyRole(HR_ROLE) {
-        require(identities[user].user != address(0), "Identity not registered");
+        require(identities[user].owner != address(0), "Identity not registered");
         
         // Store encrypted data
         encryptedData[user][fieldName] = encryptedPayload;
@@ -103,7 +103,7 @@ contract IdentityRegistry is AccessControl {
         address user,
         string memory fieldName
     ) external view onlyRole(DEFAULT_ADMIN_ROLE) returns (string memory) {
-        require(identities[user].user != address(0), "Identity not registered");
+        require(identities[user].owner != address(0), "Identity not registered");
         return encryptedData[user][fieldName];
     }
     
@@ -112,7 +112,7 @@ contract IdentityRegistry is AccessControl {
      */
     function getEncryptedFields(address user) external view returns (string[] memory) {
         require(
-            identities[user].user != address(0) || 
+            identities[user].owner != address(0) || 
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender),
             "Not authorized"
         );

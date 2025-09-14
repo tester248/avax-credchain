@@ -2,6 +2,24 @@ import express, { Request, Response } from 'express';
 
 const router = express.Router();
 
+// In-memory demo users store
+const demoUsers: Array<any> = [
+  { address: '0x0000000000000000000000000000000000000001', name: 'Alice', attestationLevel: 2 },
+  { address: '0x0000000000000000000000000000000000000002', name: 'Bob', attestationLevel: 1 },
+  { address: '0x0000000000000000000000000000000000000003', name: 'Carol', attestationLevel: 0 }
+];
+
+// GET /api/hr/users - list demo users
+router.get('/users', (_req: Request, res: Response) => {
+  return res.json({ users: demoUsers });
+});
+
+// POST /api/hr/seed - reset/seed demo users (optional)
+router.post('/seed', (_req: Request, res: Response) => {
+  // For demo we simply return the existing seed; a full implementation could accept a body
+  return res.json({ users: demoUsers });
+});
+
 // POST /api/hr/register
 // Accepts: { userAddress, jurisdiction, ipfsCid }
 router.post('/register', (req: Request, res: Response) => {

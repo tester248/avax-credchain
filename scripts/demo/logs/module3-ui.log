@@ -1,0 +1,17 @@
+
+> module3-ui@0.1.0 dev
+> next dev -p 3000
+
+   ▲ Next.js 14.0.0
+   - Local:        http://localhost:3000
+
+ ✓ Ready in 1870ms
+ ○ Compiling /admin ...
+ ✓ Compiled /admin in 519ms (258 modules)
+ ✓ Compiled / in 444ms (298 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled /icm-demo in 79ms (302 modules)
+ ○ Compiling /verify ...
+ ✓ Compiled /verify in 765ms (873 modules)
+ ✓ Compiled in 181ms (867 modules)
+ ✓ Compiled /icm-demo in 173ms (869 modules)

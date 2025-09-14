@@ -102,6 +102,13 @@ Add these networks to your wallet for testing:
 - Currency symbol: `EUCred`
 - Block explorer URL: (none for local)
 
+**CredChain IN (Local)**  
+- Network name: `CredChain IN (local)`  
+- RPC URL: `http://127.0.0.1:9654/ext/bc/C/rpc`  
+- Chain ID: `1337003` (decimal)  
+- Currency symbol: `INCred`  
+- Block explorer URL: (none for local)
+
 ## Pre-funded Test Accounts
 
 Your subnets come with pre-funded accounts you can import:
@@ -208,4 +215,31 @@ Now that your infrastructure is ready:
 - `onchain/scripts/export-artifacts.ts` — prepare artifacts for frontend
 - `onchain/scripts/generate-shared-artifacts.ts` — create consolidated artifact files
 
-Your local development environment is fully functional! 🚀
+## Frontend consumption & serving artifacts
+
+1. infra/endpoints.json contains network keys, RPC URLs and teleporterAddr — frontend/SDK expects these values via module3-api.
+
+2. shared/onchain-artifacts should be copied / served by module3-api:
+- Export from onchain:
+  cd onchain
+  npx ts-node scripts/export-artifacts.ts
+  npx ts-node scripts/generate-shared-artifacts.ts
+
+3. If module3-api runs on the same machine it will read shared/onchain-artifacts and serve:
+- GET /v1/networks -> derived from infra/endpoints.json
+- GET /v1/artifacts/addresses -> consolidated addresses.json
+- GET /v1/artifacts/:network/abis -> per-contract ABIs
+
+4. Teleporter / ICM addresses:
+- infra/teleporter.json and infra/endpoints.json contain teleporter addresses. These are used by frontend to display routing info and for debugging cross-chain flows.
+
+Example: make sure module3-api sees shared artifacts before starting:
+```
+cd onchain
+npx ts-node scripts/export-artifacts.ts
+npx ts-node scripts/generate-shared-artifacts.ts
+cd ../module3-api
+MODULE3_API_KEY=devkey npm run dev
+```
+MODULE3_API_KEY=devkey npm run dev
+```

@@ -5,7 +5,8 @@ This folder contains example subnet genesis templates for each jurisdiction. The
 Structure
 - `us/` - US subnet genesis + metadata
 - `eu/` - EU subnet genesis + metadata
+- `in/` - India subnet genesis + metadata (permissioned template, geofencing: IN)
 
-Instructions
-1. Edit `genesis.json` in the jurisdiction folder to set chainId, token names, and validator keys (use `sample-keys/` for dev).
-2. Use `avalanche-cli` or `@avalanche-sdk` to create and deploy the subnet according to your environment.
+Notes on India & PII:
+- For India-specific flows (Aadhaar), do NOT store raw identifiers on-chain.
+- Use off-chain anonymization/tokenization (e.g. anon-aadhaar) in your vault pipeline before storing pointers on-chain. Obtain legal sign-off before any real-data testing.

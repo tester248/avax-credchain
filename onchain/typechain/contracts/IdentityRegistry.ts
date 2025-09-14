@@ -30,13 +30,17 @@ export interface IdentityRegistryInterface extends utils.Interface {
   functions: {
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
     "HR_ROLE()": FunctionFragment;
+    "getEncryptedData(address,string)": FunctionFragment;
+    "getEncryptedFields(address)": FunctionFragment;
     "getIdentity(address)": FunctionFragment;
     "getRoleAdmin(bytes32)": FunctionFragment;
     "grantRole(bytes32,address)": FunctionFragment;
+    "hasEncryptedData(address)": FunctionFragment;
     "hasRole(bytes32,address)": FunctionFragment;
     "registerIdentity(address,string,string)": FunctionFragment;
     "renounceRole(bytes32,address)": FunctionFragment;
     "revokeRole(bytes32,address)": FunctionFragment;
+    "storeEncryptedData(address,string,string)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "updateConsent(address,bool)": FunctionFragment;
     "updateIdentity(address,string)": FunctionFragment;
@@ -46,13 +50,17 @@ export interface IdentityRegistryInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "DEFAULT_ADMIN_ROLE"
       | "HR_ROLE"
+      | "getEncryptedData"
+      | "getEncryptedFields"
       | "getIdentity"
       | "getRoleAdmin"
       | "grantRole"
+      | "hasEncryptedData"
       | "hasRole"
       | "registerIdentity"
       | "renounceRole"
       | "revokeRole"
+      | "storeEncryptedData"
       | "supportsInterface"
       | "updateConsent"
       | "updateIdentity"
@@ -64,6 +72,14 @@ export interface IdentityRegistryInterface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "HR_ROLE", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "getEncryptedData",
+    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getEncryptedFields",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getIdentity",
     values: [PromiseOrValue<string>]
   ): string;
@@ -74,6 +90,10 @@ export interface IdentityRegistryInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "grantRole",
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "hasEncryptedData",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "hasRole",
@@ -96,6 +116,14 @@ export interface IdentityRegistryInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
+    functionFragment: "storeEncryptedData",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "supportsInterface",
     values: [PromiseOrValue<BytesLike>]
   ): string;
@@ -114,6 +142,14 @@ export interface IdentityRegistryInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "HR_ROLE", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "getEncryptedData",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getEncryptedFields",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "getIdentity",
     data: BytesLike
   ): Result;
@@ -122,6 +158,10 @@ export interface IdentityRegistryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "hasEncryptedData",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "registerIdentity",
@@ -132,6 +172,10 @@ export interface IdentityRegistryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "revokeRole", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "storeEncryptedData",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "supportsInterface",
     data: BytesLike
@@ -147,6 +191,8 @@ export interface IdentityRegistryInterface extends utils.Interface {
 
   events: {
     "ConsentUpdated(address,bool)": EventFragment;
+    "EncryptedDataAccessed(address,address,string,uint256)": EventFragment;
+    "EncryptedDataStored(address,string,uint256)": EventFragment;
     "IdentityRegistered(address,string,string)": EventFragment;
     "IdentityUpdated(address,string)": EventFragment;
     "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
@@ -155,6 +201,8 @@ export interface IdentityRegistryInterface extends utils.Interface {
   };
 
   getEvent(nameOrSignatureOrTopic: "ConsentUpdated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "EncryptedDataAccessed"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "EncryptedDataStored"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "IdentityRegistered"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "IdentityUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
@@ -172,6 +220,33 @@ export type ConsentUpdatedEvent = TypedEvent<
 >;
 
 export type ConsentUpdatedEventFilter = TypedEventFilter<ConsentUpdatedEvent>;
+
+export interface EncryptedDataAccessedEventObject {
+  user: string;
+  accessor: string;
+  fieldName: string;
+  timestamp: BigNumber;
+}
+export type EncryptedDataAccessedEvent = TypedEvent<
+  [string, string, string, BigNumber],
+  EncryptedDataAccessedEventObject
+>;
+
+export type EncryptedDataAccessedEventFilter =
+  TypedEventFilter<EncryptedDataAccessedEvent>;
+
+export interface EncryptedDataStoredEventObject {
+  user: string;
+  fieldName: string;
+  timestamp: BigNumber;
+}
+export type EncryptedDataStoredEvent = TypedEvent<
+  [string, string, BigNumber],
+  EncryptedDataStoredEventObject
+>;
+
+export type EncryptedDataStoredEventFilter =
+  TypedEventFilter<EncryptedDataStoredEvent>;
 
 export interface IdentityRegisteredEventObject {
   user: string;
@@ -265,6 +340,17 @@ export interface IdentityRegistry extends BaseContract {
 
     HR_ROLE(overrides?: CallOverrides): Promise<[string]>;
 
+    getEncryptedData(
+      user: PromiseOrValue<string>,
+      fieldName: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
+
+    getEncryptedFields(
+      user: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[string[]]>;
+
     getIdentity(
       user: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -286,6 +372,11 @@ export interface IdentityRegistry extends BaseContract {
       account: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    hasEncryptedData(
+      user: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
 
     hasRole(
       role: PromiseOrValue<BytesLike>,
@@ -312,6 +403,13 @@ export interface IdentityRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    storeEncryptedData(
+      user: PromiseOrValue<string>,
+      fieldName: PromiseOrValue<string>,
+      encryptedPayload: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -334,6 +432,17 @@ export interface IdentityRegistry extends BaseContract {
 
   HR_ROLE(overrides?: CallOverrides): Promise<string>;
 
+  getEncryptedData(
+    user: PromiseOrValue<string>,
+    fieldName: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<string>;
+
+  getEncryptedFields(
+    user: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<string[]>;
+
   getIdentity(
     user: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -355,6 +464,11 @@ export interface IdentityRegistry extends BaseContract {
     account: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
+
+  hasEncryptedData(
+    user: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
 
   hasRole(
     role: PromiseOrValue<BytesLike>,
@@ -381,6 +495,13 @@ export interface IdentityRegistry extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  storeEncryptedData(
+    user: PromiseOrValue<string>,
+    fieldName: PromiseOrValue<string>,
+    encryptedPayload: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   supportsInterface(
     interfaceId: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
@@ -402,6 +523,17 @@ export interface IdentityRegistry extends BaseContract {
     DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
 
     HR_ROLE(overrides?: CallOverrides): Promise<string>;
+
+    getEncryptedData(
+      user: PromiseOrValue<string>,
+      fieldName: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<string>;
+
+    getEncryptedFields(
+      user: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<string[]>;
 
     getIdentity(
       user: PromiseOrValue<string>,
@@ -425,6 +557,11 @@ export interface IdentityRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    hasEncryptedData(
+      user: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
     hasRole(
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
@@ -447,6 +584,13 @@ export interface IdentityRegistry extends BaseContract {
     revokeRole(
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    storeEncryptedData(
+      user: PromiseOrValue<string>,
+      fieldName: PromiseOrValue<string>,
+      encryptedPayload: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -477,6 +621,30 @@ export interface IdentityRegistry extends BaseContract {
       user?: PromiseOrValue<string> | null,
       consent?: null
     ): ConsentUpdatedEventFilter;
+
+    "EncryptedDataAccessed(address,address,string,uint256)"(
+      user?: PromiseOrValue<string> | null,
+      accessor?: PromiseOrValue<string> | null,
+      fieldName?: PromiseOrValue<string> | null,
+      timestamp?: null
+    ): EncryptedDataAccessedEventFilter;
+    EncryptedDataAccessed(
+      user?: PromiseOrValue<string> | null,
+      accessor?: PromiseOrValue<string> | null,
+      fieldName?: PromiseOrValue<string> | null,
+      timestamp?: null
+    ): EncryptedDataAccessedEventFilter;
+
+    "EncryptedDataStored(address,string,uint256)"(
+      user?: PromiseOrValue<string> | null,
+      fieldName?: PromiseOrValue<string> | null,
+      timestamp?: null
+    ): EncryptedDataStoredEventFilter;
+    EncryptedDataStored(
+      user?: PromiseOrValue<string> | null,
+      fieldName?: PromiseOrValue<string> | null,
+      timestamp?: null
+    ): EncryptedDataStoredEventFilter;
 
     "IdentityRegistered(address,string,string)"(
       user?: PromiseOrValue<string> | null,
@@ -537,6 +705,17 @@ export interface IdentityRegistry extends BaseContract {
 
     HR_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getEncryptedData(
+      user: PromiseOrValue<string>,
+      fieldName: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    getEncryptedFields(
+      user: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getIdentity(
       user: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -551,6 +730,11 @@ export interface IdentityRegistry extends BaseContract {
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    hasEncryptedData(
+      user: PromiseOrValue<string>,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     hasRole(
@@ -575,6 +759,13 @@ export interface IdentityRegistry extends BaseContract {
     revokeRole(
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    storeEncryptedData(
+      user: PromiseOrValue<string>,
+      fieldName: PromiseOrValue<string>,
+      encryptedPayload: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -603,6 +794,17 @@ export interface IdentityRegistry extends BaseContract {
 
     HR_ROLE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    getEncryptedData(
+      user: PromiseOrValue<string>,
+      fieldName: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getEncryptedFields(
+      user: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     getIdentity(
       user: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -617,6 +819,11 @@ export interface IdentityRegistry extends BaseContract {
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    hasEncryptedData(
+      user: PromiseOrValue<string>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     hasRole(
@@ -641,6 +848,13 @@ export interface IdentityRegistry extends BaseContract {
     revokeRole(
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    storeEncryptedData(
+      user: PromiseOrValue<string>,
+      fieldName: PromiseOrValue<string>,
+      encryptedPayload: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

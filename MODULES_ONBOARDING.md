@@ -341,5 +341,58 @@ Placeholders & follow-ups
 - After Module 1 completes its deploy, replace placeholders in `infra/endpoints.json` and notify the team. Module 2 and 3 should consume those artifacts.
 - Module owners should create `ready.md` files indicating which acceptance criteria were met and any remaining risks.
 
+## Module 3 API contract (minimal schemas for frontend/SDK)
+
+1) GET /v1/networks
+Response:
+{
+  "networks": [
+    { "key":"us", "chainId":"1337001", "rpc":"http://127.0.0.1:9650/ext/bc/C/rpc", "teleporter":"0x..." },
+    ...
+  ]
+}
+
+2) GET /v1/artifacts/addresses
+Response:
+{
+  "us": {
+    "teleporter":"0x...", "router":"0x...", "identityRegistry":"0x...", "attestor":"0x...", "oracle":"0x...", "feeToken":"0x...", "rpc":"http://...","chainId":"1337001"
+  },
+  "eu": { ... }
+}
+
+3) GET /v1/artifacts/:network/abis
+Response:
+{ "abis": { "CrossChainRouter": [...], "IdentityRegistry":[...], ... } }
+
+4) POST /v1/relayer/submit
+Request:
+{
+  "network":"us",
+  "signedPayload":"0x...",    // user-signed bytes or EIP-712 signature
+  "signerAddress":"0x...",
+  "meta": { "intent":"requestVerification", "destChainId":1337002, "requestedLevel":2 }
+}
+Response:
+{ "jobId":"uuid", "status":"queued" }
+
+5) POST /v1/vault/upload
+Request:
+{ "payload":"base64", "meta":{...} }
+Response:
+{ "cid":"bafy...", "url":"https://..." }
+
+Frontend implementers: use these shapes to mock and integrate. Module3 API will serve ABI and address files from shared/onchain-artifacts.
+
 
 End of onboarding file.
+
+# New: India subnet (IN) & Aadhaar considerations
+
+We added a third jurisdictional subnet: `credchainin` (Chain ID 1337003). Integration notes:
+- Infra provides `infra/endpoints.json` with `in` entry and RPC `http://127.0.0.1:9654/ext/bc/C/rpc`.
+- For Aadhaar-related document handling DO NOT store raw Aadhaar numbers on-chain.
+- Recommended flow: integrate anon-aadhaar (https://github.com/anon-aadhaar/anon-aadhaar) inside the Module 3 vault pipeline to anonymize or tokenize identifiers before pinning to IPFS or S3 and storing the pointer on-chain.
+- Legal review is mandatory: Aadhaar data is highly regulated under Indian law; consult counsel before any real-data testing.
+
+---

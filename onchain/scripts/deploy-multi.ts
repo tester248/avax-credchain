@@ -127,7 +127,7 @@ async function main() {
     const tpPath = path.join(process.cwd(), "infra", "teleporter.json");
     if (fs.existsSync(tpPath)) {
       const raw = fs.readFileSync(tpPath, "utf8");
-      teleporterMap = JSON.parse(raw) as Record<string, string>;
+      teleporterMap = JSON.parse(raw) as Record<string, string>
       console.log("Merged teleporter addresses from infra/teleporter.json")
     }
   } catch (err) {

@@ -20,7 +20,9 @@ contract CrossChainRouter is AccessControl {
 
     function requestVerification(uint256 destChainId, address user, uint8 requestedLevel) external onlyRole(SENDER_ROLE) returns (bytes32) {
         bytes32 requestId = keccak256(abi.encodePacked(user, block.timestamp, destChainId, requestedLevel));
-        bytes memory payload = abi.encode(requestId, user, requestedLevel);
+        bytes memory inner = abi.encode(requestId, user, requestedLevel);
+        // For the TeleporterMock we send: abi.encode(address targetRouter, bytes innerPayload)
+        bytes memory payload = abi.encode(address(this), inner);
         teleporter.sendMessage(destChainId, payload);
         emit VerificationRequested(requestId, user, destChainId);
         return requestId;

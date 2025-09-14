@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/workspaces/avax-credchain/onchain/contracts/CrossChainRouter.sol": {
-      "lastModificationDate": 1757771847401,
-      "contentHash": "922d4ce13178f622b1f646bec306063a",
+      "lastModificationDate": 1757803515384,
+      "contentHash": "fe03b5c2b63161573f6f32060b13732a",
       "sourceName": "contracts/CrossChainRouter.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -604,8 +604,8 @@
       ]
     },
     "/workspaces/avax-credchain/onchain/contracts/IdentityRegistry.sol": {
-      "lastModificationDate": 1757771847401,
-      "contentHash": "8297a3d8e57baa211baa0e036878a7b8",
+      "lastModificationDate": 1757803508382,
+      "contentHash": "b5c72b28552f28d29efcb4626ce83d67",
       "sourceName": "contracts/IdentityRegistry.sol",
       "solcConfig": {
         "version": "0.8.20",

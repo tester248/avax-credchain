@@ -72,9 +72,13 @@ async function main() {
     if (useGenesis) {
       runCmd(`avalanche blockchain create credchainus --genesis subnets/us/genesis.json --proof-of-authority --validator-manager-owner ${owner} --force`)
       runCmd(`avalanche blockchain create credchaineu --genesis subnets/eu/genesis.json --proof-of-authority --validator-manager-owner ${owner} --force`)
+      // India subnet (permissioned, uses provided genesis template)
+      runCmd(`avalanche blockchain create credchainin --genesis subnets/in/genesis.json --proof-of-authority --validator-manager-owner ${owner} --force`)
     } else {
       runCmd(`avalanche blockchain create credchainus --evm --evm-chain-id 1337001 --evm-token USCred --proof-of-authority --validator-manager-owner ${owner} --test-defaults --force`)
       runCmd(`avalanche blockchain create credchaineu --evm --evm-chain-id 1337002 --evm-token EUCred --proof-of-authority --validator-manager-owner ${owner} --test-defaults --force`)
+      // India subnet (non-genesis flow uses evm creation parameters)
+      runCmd(`avalanche blockchain create credchainin --evm --evm-chain-id 1337003 --evm-token INCred --proof-of-authority --validator-manager-owner ${owner} --test-defaults --force`)
     }
   } catch (e) {
     console.warn('Some create commands failed; continuing (they may already exist)')
@@ -90,7 +94,9 @@ async function main() {
   // Write endpoints (local dev convention)
   const endpoints: any = {
     us: { chainId: '1337001', subnetId: 'credchainus', rpc: 'http://127.0.0.1:9650/ext/bc/C/rpc', teleporterAddr: null },
-    eu: { chainId: '1337002', subnetId: 'credchaineu', rpc: 'http://127.0.0.1:9652/ext/bc/C/rpc', teleporterAddr: null }
+    eu: { chainId: '1337002', subnetId: 'credchaineu', rpc: 'http://127.0.0.1:9652/ext/bc/C/rpc', teleporterAddr: null },
+    // India subnet added for Module 3 / India compliance demos
+    in: { chainId: '1337003', subnetId: 'credchainin', rpc: 'http://127.0.0.1:9654/ext/bc/C/rpc', teleporterAddr: null }
   }
 
   writeEndpoints(endpoints)
