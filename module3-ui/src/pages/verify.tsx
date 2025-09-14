@@ -12,7 +12,7 @@ export default function VerifyPage() {
       const provider = await getProvider();
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
-      const meta = { destChainId: 1337002, attestationLevel: 1, nonce: Math.floor(Date.now()/1000), userAddress: address };
+      const meta = { destChainId: 1337001, attestationLevel: 1, nonce: Math.floor(Date.now()/1000), userAddress: address };
       const signedPayload = await signVerificationPayload(signer, meta);
       setSigned(signedPayload);
 

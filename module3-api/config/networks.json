@@ -1,0 +1,15 @@
+{
+  "avalanche_l1": {
+    "rpc": "http://127.0.0.1:9650/ext/bc/C/rpc",
+    "chainId": 1337,
+    "networkId": 1337,
+    "name": "Avalanche L1 Blockchain",
+    "default": true
+  },
+  "development": {
+    "rpc": "http://127.0.0.1:8545",
+    "chainId": 31337,
+    "networkId": 31337,
+    "name": "Hardhat Development"
+  }
+}

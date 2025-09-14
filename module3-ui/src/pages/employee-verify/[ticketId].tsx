@@ -59,7 +59,7 @@ export default function EmployeeVerifyPage() {
       const userAddress = await signer.getAddress();
       
       // Create verification payload
-      const destChainId = 1337; // Local hardhat chain
+      const destChainId = 1337001; // credchainus subnet
       const attestationLevel = 2; // High level verification
       const nonce = Math.floor(Date.now() / 1000);
       

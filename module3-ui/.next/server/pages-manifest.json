@@ -2,8 +2,8 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/icm-demo": "pages/icm-demo.js",
-  "/employee-verify/[ticketId]": "pages/employee-verify/[ticketId].js",
   "/": "pages/index.js",
-  "/admin": "pages/admin.js"
+  "/verify": "pages/verify.js",
+  "/admin": "pages/admin.js",
+  "/vault": "pages/vault.js"
 }

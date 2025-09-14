@@ -32,15 +32,15 @@
       "static/chunks/main.js",
       "static/chunks/pages/admin.js"
     ],
-    "/employee-verify/[ticketId]": [
+    "/vault": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/employee-verify/[ticketId].js"
+      "static/chunks/pages/vault.js"
     ],
-    "/icm-demo": [
+    "/verify": [
       "static/chunks/webpack.js",
       "static/chunks/main.js",
-      "static/chunks/pages/icm-demo.js"
+      "static/chunks/pages/verify.js"
     ]
   },
   "ampFirstPages": []

@@ -1,20 +1,32 @@
 {
-  "us": {
+  "credchainus": {
     "chainId": "1337001", 
     "subnetId": "credchainus",
+    "rpc": "http://127.0.0.1:35885/ext/bc/3XbrmCiJw54WYP1WKiKV4sxX1mpjmc3WJapRZ78rwCgYt2kuQ/rpc",
+    "teleporterAddr": "0x253b2784c75e510dD0fF1da844684a1aC0aa5fcf"
+  },
+  "avalanche_l1": {
+    "chainId": "1337", 
+    "subnetId": "avalanche-l1-main",
     "rpc": "http://127.0.0.1:9650/ext/bc/C/rpc",
     "teleporterAddr": null
   },
+  "us": {
+    "chainId": "1337001", 
+    "subnetId": "credchainus",
+    "rpc": "http://127.0.0.1:35885/ext/bc/3XbrmCiJw54WYP1WKiKV4sxX1mpjmc3WJapRZ78rwCgYt2kuQ/rpc",
+    "teleporterAddr": "0x253b2784c75e510dD0fF1da844684a1aC0aa5fcf"
+  },
   "eu": {
-    "chainId": "1337002",
+    "chainId": "1337001",
     "subnetId": "credchaineu", 
-    "rpc": "http://127.0.0.1:9652/ext/bc/C/rpc",
-    "teleporterAddr": null
+    "rpc": "http://127.0.0.1:35885/ext/bc/3XbrmCiJw54WYP1WKiKV4sxX1mpjmc3WJapRZ78rwCgYt2kuQ/rpc",
+    "teleporterAddr": "0x253b2784c75e510dD0fF1da844684a1aC0aa5fcf"
   },
   "in": {
-    "chainId": "1337003",
+    "chainId": "1337001",
     "subnetId": "credchainin",
-    "rpc": "http://127.0.0.1:9654/ext/bc/C/rpc",
-    "teleporterAddr": null
+    "rpc": "http://127.0.0.1:35885/ext/bc/3XbrmCiJw54WYP1WKiKV4sxX1mpjmc3WJapRZ78rwCgYt2kuQ/rpc",
+    "teleporterAddr": "0x253b2784c75e510dD0fF1da844684a1aC0aa5fcf"
   }
 }

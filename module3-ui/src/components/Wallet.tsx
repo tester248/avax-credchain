@@ -58,7 +58,7 @@ export default function Wallet() {
       const wc = new WalletConnectProvider({
         infuraId: process.env.NEXT_PUBLIC_INFURA_ID || undefined,
         rpc: { 43114: 'https://api.avax.network/ext/bc/C/rpc' },
-        chainId: 43114,
+        chainId: 1337001,
       } as any);
       await wc.enable();
       setWcProvider(wc);
@@ -105,7 +105,7 @@ export default function Wallet() {
     if (!provider) return;
     try {
       const signer = (await provider.getSigner()) as any;
-  const destChainId = 1337002;
+  const destChainId = 1337001;
   const attestationLevel = 1;
   const nonce = Math.floor(Date.now() / 1000);
   const encoded = new AbiCoder().encode(['uint256','address','uint8','uint256'], [destChainId, address, attestationLevel, nonce]);

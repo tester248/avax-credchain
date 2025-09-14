@@ -23,9 +23,10 @@ export INFRA_ENDPOINTS_PATH="./infra/endpoints.json"
 export TELEPORTER_MESSENGER_ADDR_US="0xEe3a2fB940Fc623Dc7713bB37aa7D5484a99072F"   # e.g. 0x...
 export TELEPORTER_MESSENGER_ADDR_EU="0xBbE98ee5451c9353e141638C97f3c4FD9072481C"   # e.g. 0x...
 
-# Subnet RPC endpoints for local subnets (replace with real RPCs after deploy)
-export SUBNET_US_RPC="http://127.0.0.1:9650"  # e.g. http://host:port or https://rpc.example
-export SUBNET_EU_RPC="http://127.0.0.1:9652"
+# Subnet RPC endpoints for Avalanche L1 blockchain
+export AVALANCHE_L1_RPC="http://127.0.0.1:9650/ext/bc/C/rpc"  # Your Avalanche L1 RPC
+export SUBNET_US_RPC="http://127.0.0.1:9650/ext/bc/C/rpc"  # Updated to use Avalanche L1
+export SUBNET_EU_RPC="http://127.0.0.1:9650/ext/bc/C/rpc"  # Updated to use Avalanche L1
 
 # Toggle to indicate infra subnets are permissioned (true/false)
 export PERMISSIONED_SUBNET="true"

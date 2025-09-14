@@ -1,0 +1,16 @@
+ POST /api/hr/verification/create 404 in 18ms
+ GET / 200 in 116ms
+ POST /api/hr/verification/create 404 in 544ms
+ ✓ Compiled /_not-found in 425ms (1500 modules)
+ ✓ Compiled /hr in 2.6s (1511 modules)
+ ○ Compiling /hr ...
+ GET / 200 in 5258ms
+ ✓ Compiled / in 5s (927 modules)
+ ○ Compiling / ...
+ ✓ Ready in 2.1s
+ ✓ Starting...
+  - Local:        http://localhost:3000
+  ▲ Next.js 14.2.16
+> next dev
+> my-v0-project@0.1.0 dev
+@tester248 ➜ /workspaces/avax-credchain/credchain-platform (v2) $ npm run dev

@@ -265,7 +265,7 @@ router.post('/create-fake', (req: Request, res: Response) => {
   const { userAddress, destChainId, attestationLevel } = req.body || {};
   if (!userAddress) return res.status(400).json({ error: 'userAddress required' });
   const jobId = uuidv4();
-  const meta = { userAddress, destChainId: destChainId || 1337, attestationLevel: attestationLevel || 1, nonce: Math.floor(Date.now()/1000), verified: true };
+  const meta = { userAddress, destChainId: destChainId || 1337001, attestationLevel: attestationLevel || 1, nonce: Math.floor(Date.now()/1000), verified: true };
   jobs[jobId] = { status: 'queued', createdAt: Date.now(), meta };
   // simulate processing
   setTimeout(() => {
