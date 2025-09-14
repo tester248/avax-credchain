@@ -33,15 +33,39 @@ function saveJobs(j: Record<string, any>) {
   }
 }
 
+// Helper function to complete HR verification when relayer job is done
+async function completeHRVerification(ticketId: string, verified: boolean, signature?: string, signedPayload?: string, verifiedAddress?: string) {
+  try {
+    const response = await fetch(`${process.env.API_BASE_URL || 'http://localhost:4000'}/api/hr/verification/complete/${ticketId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        success: verified,
+        signature,
+        signedPayload,
+        verifiedAddress
+      })
+    });
+    
+    if (!response.ok) {
+      console.warn('Failed to complete HR verification:', await response.text());
+    } else {
+      console.log('HR verification completed for ticket:', ticketId);
+    }
+  } catch (error) {
+    console.error('Error completing HR verification:', error);
+  }
+}
+
 const jobs: Record<string, any> = loadJobs();
 
 // POST /v1/relayer/submit
-// body: { messageHash, signature, meta: { destChainId, attestationLevel, nonce, userAddress } }
+// body: { messageHash, signature, meta: { destChainId, attestationLevel, nonce, userAddress, hrTicketId? } }
 router.post('/submit', async (req: Request, res: Response) => {
   try {
     const { messageHash, signature, meta } = req.body;
     if (!messageHash || !signature || !meta) return res.status(400).json({ error: 'missing fields' });
-    const { userAddress } = meta;
+    const { userAddress, hrTicketId } = meta;
     if (!userAddress) return res.status(400).json({ error: 'missing userAddress in meta' });
 
     // Recompute the ABI-encoded message and its keccak256 digest from meta (destChainId, userAddress, attestationLevel, nonce)
@@ -123,6 +147,12 @@ router.post('/submit', async (req: Request, res: Response) => {
       setTimeout(() => {
         jobs[jobId].status = 'done';
         jobs[jobId].txHash = '0x' + uuidv4().replace(/-/g, '').slice(0, 64);
+        saveJobs(jobs);
+        
+        // If this is an HR verification request, complete it
+        if (hrTicketId) {
+          completeHRVerification(hrTicketId, verified, signature, messageHash, recovered || undefined);
+        }
       }, 1500);
     }, 500);
 

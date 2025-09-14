@@ -1,0 +1,18 @@
+[
+  {
+    "ticketId": "2e90e800-d974-4bf3-87ab-e99b82ac7445",
+    "hrRequestId": "HR_TEST_001",
+    "employeeId": "EMP001",
+    "employeeName": "John Smith",
+    "employeeEmail": "john.smith@company.com",
+    "verificationTypes": [
+      "identity",
+      "employment",
+      "education"
+    ],
+    "status": "sent_to_employee",
+    "createdAt": "2025-09-14T03:24:27.260Z",
+    "updatedAt": "2025-09-14T03:24:27.262Z",
+    "verificationUrl": "http://localhost:3000/employee-verify/2e90e800-d974-4bf3-87ab-e99b82ac7445"
+  }
+]

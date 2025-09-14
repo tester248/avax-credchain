@@ -148,12 +148,33 @@ export default function EmployeeVerification() {
 
     setIsLoading(true);
 
-    // Simulate initiating background check
-    setTimeout(() => {
+    try {
+      // Call CredentialChain API to create verification request
+      const response = await fetch('http://localhost:4000/api/hr/verification/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          hrRequestId: `HR_${Date.now()}`,
+          employeeId: selectedEmployee.id,
+          employeeName: selectedEmployee.name,
+          employeeEmail: selectedEmployee.email,
+          verificationTypes: ['identity', 'employment', 'education', 'criminal', 'credit']
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create verification request');
+      }
+
+      const result = await response.json();
+      
+      // Create new check record with CredentialChain integration
       const newCheck: BackgroundCheck = {
-        id: `BGC${Date.now()}`,
+        id: result.ticketId,
         employeeId: selectedEmployee.id,
-        status: 'in-progress',
+        status: 'pending',
         initiatedBy: 'HR Manager',
         initiatedDate: new Date().toISOString().split('T')[0],
         checks: {
@@ -162,44 +183,95 @@ export default function EmployeeVerification() {
           education: 'pending',
           criminal: 'pending',
           credit: 'pending'
-        }
+        },
+        notes: `CredentialChain verification link: ${result.verificationUrl}`
       };
 
       setBackgroundCheck(newCheck);
       setRecentChecks(prev => [newCheck, ...prev]);
+      
+      // Show employee the verification URL
+      alert(`Verification request created! Send this link to ${selectedEmployee.name}:\n\n${result.verificationUrl}`);
+      
+      // Start polling for status updates
+      pollVerificationStatus(result.ticketId, selectedEmployee.id);
+      
+    } catch (error) {
+      console.error('Error creating verification request:', error);
+      alert('Failed to create verification request. Please try again.');
+    } finally {
       setIsLoading(false);
-
-      // Simulate check progress
-      simulateCheckProgress(newCheck);
-    }, 1000);
+    }
   };
 
-  const simulateCheckProgress = (check: BackgroundCheck) => {
-    const checks = ['identity', 'employment', 'education', 'criminal', 'credit'] as const;
-    let currentIndex = 0;
+  const pollVerificationStatus = async (ticketId: string, employeeId: string) => {
+    const maxAttempts = 30; // Poll for 5 minutes (30 * 10 seconds)
+    let attempts = 0;
 
-    const interval = setInterval(() => {
-      if (currentIndex >= checks.length) {
-        clearInterval(interval);
-        setBackgroundCheck(prev => prev ? {
-          ...prev,
-          status: 'completed',
-          completedDate: new Date().toISOString().split('T')[0]
-        } : null);
-        return;
-      }
+    const poll = async () => {
+      try {
+        const response = await fetch(`http://localhost:4000/api/hr/verification/status/HR_${ticketId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
 
-      const checkType = checks[currentIndex];
-      setBackgroundCheck(prev => prev ? {
-        ...prev,
-        checks: {
-          ...prev.checks,
-          [checkType]: Math.random() > 0.1 ? 'passed' : 'failed'
+        if (response.ok) {
+          const statusData = await response.json();
+          
+          // Update background check status based on CredentialChain response
+          setBackgroundCheck(prev => {
+            if (!prev || prev.employeeId !== employeeId) return prev;
+            
+            let updatedChecks = { ...prev.checks };
+            let status = prev.status;
+            
+            if (statusData.status === 'verified') {
+              // Mark all checks as passed when verification is complete
+              updatedChecks = {
+                identity: 'passed',
+                employment: 'passed',
+                education: 'passed',
+                criminal: 'passed',
+                credit: 'passed'
+              };
+              status = 'completed';
+            } else if (statusData.status === 'failed') {
+              status = 'failed';
+            } else if (statusData.status === 'employee_signed') {
+              status = 'in-progress';
+            }
+            
+            return {
+              ...prev,
+              status,
+              checks: updatedChecks,
+              completedDate: statusData.status === 'verified' ? new Date().toISOString().split('T')[0] : prev.completedDate
+            };
+          });
+
+          // Stop polling if verification is complete or failed
+          if (statusData.status === 'verified' || statusData.status === 'failed') {
+            return;
+          }
         }
-      } : null);
 
-      currentIndex++;
-    }, 2000);
+        attempts++;
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 10000); // Poll every 10 seconds
+        }
+      } catch (error) {
+        console.error('Error polling verification status:', error);
+        attempts++;
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 10000);
+        }
+      }
+    };
+
+    // Start polling after a short delay
+    setTimeout(poll, 5000);
   };
 
   const getStatusIcon = (status: string) => {
@@ -236,7 +308,7 @@ export default function EmployeeVerification() {
               <ShieldCheckIcon className="w-8 h-8 text-blue-600" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Employee Verification</h1>
-                <p className="text-sm text-gray-600">Background Check Management System</p>
+                <p className="text-sm text-gray-600">CredentialChain Integration • Powered by Avalanche</p>
               </div>
             </div>
             <div className="flex items-center space-x-3">
@@ -340,22 +412,36 @@ export default function EmployeeVerification() {
             {/* Background Check Action */}
             <div className="mt-6 pt-6 border-t">
               {!backgroundCheck ? (
-                <button
-                  onClick={handleInitiateBackgroundCheck}
-                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-                >
-                  <ShieldCheckIcon className="w-5 h-5" />
-                  <span>Initiate Background Check</span>
-                </button>
+                <div>
+                  <button
+                    onClick={handleInitiateBackgroundCheck}
+                    className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-lg hover:from-red-700 hover:to-orange-700 transition-all flex items-center space-x-2 mb-3"
+                  >
+                    <ShieldCheckIcon className="w-5 h-5" />
+                    <span>Initiate CredentialChain Verification</span>
+                  </button>
+                  <p className="text-sm text-gray-600">
+                    🔗 Powered by Avalanche blockchain technology for secure, instant identity verification
+                  </p>
+                </div>
               ) : (
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium text-gray-900">Background Check Status</h3>
+                    <h3 className="font-medium text-gray-900">CredentialChain Verification Status</h3>
                     <div className="flex items-center space-x-2">
                       {getStatusIcon(backgroundCheck.status)}
                       <span className="capitalize text-sm font-medium">{backgroundCheck.status}</span>
                     </div>
                   </div>
+                  
+                  {backgroundCheck.notes && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        <strong>📧 Employee Verification Link:</strong><br/>
+                        A secure verification link has been generated. Share this with the employee to complete their blockchain-based identity verification.
+                      </p>
+                    </div>
+                  )}
                   
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     {Object.entries(backgroundCheck.checks).map(([checkType, status]) => (

@@ -2,16 +2,25 @@
 > module3-ui@0.1.0 dev
 > next dev -p 3000
 
-   ▲ Next.js 14.0.0
-   - Local:        http://localhost:3000
-
- ✓ Ready in 1870ms
+ ⨯ Failed to start server
+Error: listen EADDRINUSE: address already in use :::3000
+    at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at /workspaces/avax-credchain/module3-ui/node_modules/next/dist/server/lib/start-server.js:268:16
+    at new Promise (<anonymous>)
+    at startServer (/workspaces/avax-credchain/module3-ui/node_modules/next/dist/server/lib/start-server.js:181:11)
+    at process.<anonymous> ○ Compiling /employee-verify/[ticketId] ...
+ ✓ Compiled /employee-verify/[ticketId] in 1004ms (917 modules)
+ ✓ Compiled /_error in 386ms (915 modules)
+ ✓ Compiled / in 119ms (917 modules)
  ○ Compiling /admin ...
- ✓ Compiled /admin in 519ms (258 modules)
- ✓ Compiled / in 444ms (298 modules)
- ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
- ✓ Compiled /icm-demo in 79ms (302 modules)
- ○ Compiling /verify ...
- ✓ Compiled /verify in 765ms (873 modules)
- ✓ Compiled in 181ms (867 modules)
- ✓ Compiled /icm-demo in 173ms (869 modules)
+ ✓ Compiled /admin in 645ms (919 modules)
+21) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '::',
+  port: 3000
+}
+[?25h
