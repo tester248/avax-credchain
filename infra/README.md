@@ -1,103 +1,162 @@
-# CredentialChain — Infra Module (Local dev)
+# Infrastructure Module
 
-Purpose: provide subnet templates, local deploy scripts, and Teleporter mock deployment for local development. This runbook explains installing the Avalanche CLI, starting/test-driving local subnets, deploying the mock Teleporter, and safety notes for handling dev keys.
+This module manages the Avalanche subnet infrastructure, including subnet deployment, network configuration, and Inter-Chain Messaging (ICM) setup for the CredChain credential verification system.
 
-## Current Status ✅
+## Overview
 
-Based on your setup, you already have:
-- **Two local subnets running**: `credchainus` (1337001) and `credchaineu` (1337002)
-- **Pre-funded accounts**: `ewoq` account with 1M tokens on each subnet
-- **Avalanche CLI**: Properly installed and configured
-- **All smart contracts**: Successfully compiled and ready for deployment
+The infrastructure module provides:
 
-## Quick start
+- Avalanche subnet deployment and management scripts
+- Network configuration for multiple subnets
+- ICM Teleporter integration for cross-chain messaging
+- Development utilities for key generation and account funding
+- Integration testing framework
 
-1. Install Node dependencies (from `infra/`):
+## Prerequisites
+
+- Avalanche CLI installed and configured
+- Node.js v18+ and npm
+- POSIX-compatible shell environment
+
+## Installation
+
+Install dependencies from the infra directory:
 
 ```bash
 cd infra
 npm install
 ```
 
-2. ✅ **Already done**: Avalanche CLI is installed and working
+## Network Configuration
 
-3. ✅ **Already done**: Local subnets are created and running
+The system currently operates on the following networks:
 
-4. Verify your setup and RPCs are reachable:
+**credchainus Subnet**:
+- Chain ID: 1337001
+- RPC Endpoint: `http://127.0.0.1:35885/ext/bc/3XbrmCiJw54WYP1WKiKV4sxX1mpjmc3WJapRZ78rwCgYt2kuQ/rpc`
+- ICM Teleporter: `0x253b2784c75e510dD0fF1da844684a1aC0aa5fcf`
 
+## Available Scripts
+
+### Subnet Management
+
+**subnet-control.ts**: Manages subnet lifecycle operations
 ```bash
-# Check subnet status
-avalanche network status
-
-# Test US C-Chain RPC
-curl -sS -X POST http://127.0.0.1:9650/ext/bc/C/rpc -H 'content-type:application/json' -d '{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}'
-
-# Test EU C-Chain RPC  
-curl -sS -X POST http://127.0.0.1:9652/ext/bc/C/rpc -H 'content-type:application/json' -d '{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}'
+npx ts-node scripts/subnet-control.ts start
+npx ts-node scripts/subnet-control.ts stop
+npx ts-node scripts/subnet-control.ts status
 ```
 
-Expected responses: `{"jsonrpc":"2.0","id":1,"result":"0x146289"}` (US) and `{"jsonrpc":"2.0","id":1,"result":"0x14628a"}` (EU)
+### Contract Deployment
 
-## Deploy Smart Contracts
-
-You have all contracts compiled. Now deploy them to your local subnets:
-
-1. **Use the pre-funded ewoq account** (already has 1M tokens on each subnet):
-
+**deploy-teleporter.ts**: Deploys Teleporter mock contracts
 ```bash
-# Export the ewoq private key for deployment
-export DEPLOYER_PRIVATE_KEY="0x56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027"
-
-# Deploy to both subnets
-cd onchain
-npx ts-node scripts/deploy-multi.ts
+export RELAYER_PRIVATE_KEY="0x56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027"
+npx ts-node scripts/deploy-teleporter.ts
 ```
 
-This will deploy all contracts (TeleporterMock, CrossChainRouter, IdentityRegistry, VerificationAttestor, ReputationOracle, FeeToken) to both subnets.
+### Account Management
 
-2. **Generate shared artifacts** for frontend consumption:
-
+**fund-relayer.ts**: Funds relayer accounts with AVAX
 ```bash
-# Still in onchain/ directory
-npx ts-node scripts/export-artifacts.ts
-npx ts-node scripts/generate-shared-artifacts.ts
+export FUNDER_PRIVATE_KEY="0x56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027"
+export RELAYER_ADDRESS="0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC"
+npx ts-node scripts/fund-relayer.ts
 ```
 
-3. **Test the deployment** with integration simulation:
-
+**generate-dev-key.ts**: Generates development key pairs
 ```bash
-cd ../infra
+npx ts-node scripts/generate-dev-key.ts
+```
+
+### Testing
+
+**integration-sim.ts**: Runs end-to-end integration tests
+```bash
 export RELAYER_PRIVATE_KEY="0x56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027"
 export USER_PRIVATE_KEY="0x56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027"
 npx ts-node scripts/integration-sim.ts
 ```
 
-## Alternative: Deploy Mock Teleporter Separately
+## Network Verification
 
-If you want to deploy just the Teleporter mock first (before the main contracts):
+Verify network connectivity:
 
 ```bash
-cd infra
-export RELAYER_PRIVATE_KEY="0x56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027"
-npx ts-node scripts/deploy-teleporter.ts
+# Check credchainus subnet
+curl -X POST --data '{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}' \
+  -H 'Content-Type: application/json' \
+  http://127.0.0.1:35885/ext/bc/3XbrmCiJw54WYP1WKiKV4sxX1mpjmc3WJapRZ78rwCgYt2kuQ/rpc
 ```
 
-This will create `infra/teleporter.json` with teleporter addresses that the main deployment script can use.
+Expected response: `{"jsonrpc":"2.0","id":1,"result":"0x146289"}`
 
-## Adding RPCs to MetaMask / Core Wallet
+## Configuration Files
 
-Add these networks to your wallet for testing:
+**endpoints.json**: Network endpoint configuration
+```json
+{
+  "credchainus": {
+    "chainId": "1337001",
+    "subnetId": "credchainus",
+    "rpc": "http://127.0.0.1:35885/ext/bc/3XbrmCiJw54WYP1WKiKV4sxX1mpjmc3WJapRZ78rwCgYt2kuQ/rpc",
+    "teleporterAddr": "0x253b2784c75e510dD0fF1da844684a1aC0aa5fcf"
+  }
+}
+```
 
-**CredChain US (Local)**
-- Network name: `CredChain US (local)`
-- RPC URL: `http://127.0.0.1:9650/ext/bc/C/rpc`
-- Chain ID: `1337001` (decimal)
-- Currency symbol: `USCred`
-- Block explorer URL: (none for local)
+**teleporter.json**: ICM Teleporter contract addresses
+```json
+{
+  "credchainus": "0x253b2784c75e510dD0fF1da844684a1aC0aa5fcf"
+}
+```
 
-**CredChain EU (Local)**  
-- Network name: `CredChain EU (local)`
-- RPC URL: `http://127.0.0.1:9652/ext/bc/C/rpc`
+## Development Accounts
+
+**Main Account (ewoq)**:
+- Address: `0x8db97C7cEcE249c2b98bDC0226Cc4C2A57BF52FC`
+- Private Key: `0x56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027`
+- Pre-funded with ~1,000,000 USCred tokens
+
+**ICM Account**:
+- Address: `0x58155273dfCe2e0D931cb38db80123678229c07B`
+- Private Key: `0xa7c558e3236ec52ce0ef78005c6f977f566861c64194df9b0ce9916fa85251b0`
+- Pre-funded with 600 USCred tokens
+
+## Wallet Configuration
+
+Add the credchainus network to MetaMask or Core Wallet:
+
+- **Network Name**: credchainus
+- **RPC URL**: `http://127.0.0.1:35885/ext/bc/3XbrmCiJw54WYP1WKiKV4sxX1mpjmc3WJapRZ78rwCgYt2kuQ/rpc`
+- **Chain ID**: `1337001`
+- **Currency Symbol**: `USCred`
+- **Currency Name**: `USCred Token`
+
+## Security Considerations
+
+- Never commit private keys to version control
+- Use environment variables for sensitive configuration
+- Rotate development keys regularly
+- Implement proper access controls for production deployments
+
+## Troubleshooting
+
+**Network Connection Issues**:
+- Verify subnet is running with `avalanche network status`
+- Check RPC endpoint accessibility
+- Ensure correct chain ID configuration
+
+**Account Funding Issues**:
+- Verify account has sufficient balance
+- Check gas price configuration
+- Ensure proper private key format (0x prefix)
+
+**Contract Deployment Issues**:
+- Verify Teleporter contracts are deployed first
+- Check network configuration in endpoints.json
+- Ensure sufficient gas limits
 - Chain ID: `1337002` (decimal)
 - Currency symbol: `EUCred`
 - Block explorer URL: (none for local)

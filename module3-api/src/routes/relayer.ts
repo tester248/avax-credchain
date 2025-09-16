@@ -259,6 +259,49 @@ router.get('/job/:jobId', (req: Request, res: Response) => {
   return res.json({ jobId: req.params.jobId, job });
 });
 
+// Server-Sent Events stream for job status transitions (simple in-memory broadcaster)
+// GET /v1/relayer/events
+router.get('/events', (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  const send = (data: any) => {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  // Immediately send existing queued/processing jobs snapshot
+  Object.entries(jobs).forEach(([jobId, job]) => {
+    send({ type: 'snapshot', jobId, status: job.status, meta: job.meta, txHash: job.txHash || null });
+  });
+
+  // Patch the job status setter by monkey-patching jobs object (lightweight approach)
+  const originalSetStatus = (jobId: string, status: string) => {
+    if (jobs[jobId]) jobs[jobId].status = status;
+  };
+
+  // We simulate by wrapping setTimeout usage points; instead, we will emit from the timers below.
+  // Maintain list of intervals/timeouts not required; we just rely on the existing timeouts when they fire.
+
+  // Hook into process events: override setTimeout locally is risky; instead we emit in the existing timeouts where status changes (done above in code).
+  // For minimal intrusion, poll statuses periodically and push changes.
+  let lastStatuses: Record<string,string> = {};
+  Object.entries(jobs).forEach(([jid, job]: any) => { lastStatuses[jid] = job.status; });
+  const interval = setInterval(() => {
+    Object.entries(jobs).forEach(([jid, job]: any) => {
+      if (lastStatuses[jid] !== job.status) {
+        lastStatuses[jid] = job.status;
+        send({ type: 'update', jobId: jid, status: job.status, meta: job.meta, txHash: job.txHash || null });
+      }
+    });
+  }, 1000);
+
+  req.on('close', () => {
+    clearInterval(interval);
+  });
+});
+
 // POST /v1/relayer/create-fake
 // body: { userAddress, destChainId, attestationLevel }
 router.post('/create-fake', (req: Request, res: Response) => {

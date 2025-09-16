@@ -1,103 +1,268 @@
-# Module 3 API - HRIS integration service
+# API Module
 
-This lightweight Express API provides endpoints intended for integration with HRIS/HRMIS backends.
+RESTful API service for enterprise integration, relayer operations, and HR verification workflows in the CredChain credential verification system.
 
-## API: endpoints, schemas and examples
+## Overview
 
-Base path: /api (or /v1 for new versions) Auth: local dev uses HMAC-API-KEY or simple API key (set via MODULE3_API_KEY env). Do NOT send private keys.
+The API module provides:
 
-1.  **GET** `/v1/networks`
+- Enterprise integration endpoints for HRIS/HRMIS systems
+- Relayer service for sponsored blockchain transactions
+- Document vault integration for off-chain storage
+- HR verification workflow management
+- Contract artifact serving for frontend integration
 
-    - Returns configured networks from `infra/endpoints.json` or `shared/onchain-artifacts/addresses.json`
+## Installation
 
-    Response:
+Install dependencies from the module3-api directory:
 
-    ```json
-    { "networks": [{ "key":"us", "chainId":"1337001", "rpc":"http://127.0.0.1:9650/ext/bc/C/rpc", "teleporter":"0x..." }, ...] }
-    ```
+```bash
+cd module3-api
+npm install
+```
 
-    Example curl:
+## Configuration
 
-    ```bash
-    curl http://localhost:4000/v1/networks
-    ```
+Set environment variables:
 
-2.  **GET** `/v1/artifacts/addresses`
+```bash
+export PORT=4000
+export API_BASE_URL=http://localhost:4000
+export MODULE3_API_KEY=devkey
+```
 
-    - Returns consolidated `addresses.json` from `shared/onchain-artifacts/addresses.json`
+## Running the Service
 
-    Response: mapping of networks -> addresses (router, teleporter, registry, attestor, feeToken)
+Start the development server:
 
-3.  **GET** `/v1/artifacts/:network/abis`
+```bash
+npm run dev
+```
 
-    - Returns ABIs bundle for network (reads `shared/onchain-artifacts/abis/`)
+The API will be available at `http://localhost:4000`
 
-    Response:
+## API Endpoints
 
-    ```json
-    { "abis": { "CrossChainRouter": [...], "IdentityRegistry": [...], ... } }
-    ```
+### Network Configuration
 
-4.  **POST** `/v1/relayer/submit`
+**GET /v1/networks**
+Returns configured network information
 
-    - Purpose: submit a signed user payload to be forwarded by the relayer (server verifies signature, enqueues job)
-    - Body (JSON):
-
-    ```json
+Response:
+```json
+{
+  "networks": [
     {
-      "network": "us",
-      "signedPayload": "<hex|string>",
-      "signerAddress": "0x...",
-      "meta": { "intent":"requestVerification","destChainId":1337002, "requestedLevel":2 }
+      "key": "credchainus",
+      "chainId": "1337001",
+      "rpc": "http://127.0.0.1:35885/ext/bc/3XbrmCiJw54WYP1WKiKV4sxX1mpjmc3WJapRZ78rwCgYt2kuQ/rpc",
+      "teleporter": "0x253b2784c75e510dD0fF1da844684a1aC0aa5fcf"
     }
-    ```
+  ]
+}
+```
 
-    - Response:
+### Contract Artifacts
 
-    ```json
-    { "jobId": "uuid", "status":"queued" }
-    ```
+**GET /v1/artifacts/addresses**
+Returns deployed contract addresses by network
 
-    Notes:
+**GET /v1/artifacts/:network/abis**
+Returns contract ABIs for specified network
 
-    - Server MUST verify signature (ethers.utils.recoverAddress / verifyMessage)
-    - Server enqueues and returns jobId; worker submits sponsored tx
+### Relayer Services
 
-5.  **GET** `/v1/relayer/status/:jobId`
+**POST /v1/relayer/submit**
+Submit signed verification requests for relayer processing
 
-    - Returns job status and tx receipts (when available)
+Request Body:
+```json
+{
+  "messageHash": "0x...",
+  "signature": "0x...",
+  "meta": {
+    "destChainId": 1337001,
+    "attestationLevel": 1,
+    "nonce": 1234567890,
+    "userAddress": "0x...",
+    "hrTicketId": "optional"
+  }
+}
+```
 
-    Response:
+Response:
+```json
+{
+  "jobId": "uuid-string"
+}
+```
 
-    ```json
-    { "jobId":"...", "status":"done|queued|failed", "txReceipt":{...} }
-    ```
+**GET /v1/relayer/status/:jobId**
+Check relayer job status and transaction results
 
-6.  **POST** `/v1/vault/upload`
+**GET /v1/relayer/list**
+List all relayer jobs (development only)
 
-    - Accepts JSON or multipart form upload (for now: JSON body with { "payload":"base64", "meta":{...} })
-    - Server returns mocked CID or S3 URL
+**POST /v1/relayer/create-fake**
+Create test relayer jobs for development
 
-    Response:
+### HR Verification
 
-    ```json
-    { "cid":"bafy...","url":"https://mock.pinata/ipfs/bafy..." }
-    ```
+**POST /api/hr/verification/request**
+Request HR verification for an employee
 
-7.  **POST** `/v1/teleporter/send`
+**POST /api/hr/verification/complete/:ticketId**
+Complete HR verification workflow
 
-    - Proxy helper for teleporter flows (used in mocks)
+**GET /api/hr/verification/:ticketId**
+Get HR verification status
 
-    Body: { network:"eu", toRouter:"0x...", payload:"0x..." }
+### Document Vault
 
-    Response: { "result":"submitted", "txHash":"0x..." }
+**POST /api/vault/upload**
+Upload documents to off-chain storage
 
-## Example JS (frontend SDK)
+Request (multipart/form-data):
+- `file`: Document file
+- `metadata`: JSON metadata
 
-```js
-// fetch networks
-const nets = await fetch('http://localhost:4000/v1/networks').then(r=>r.json());
-// submit relayer job (signedMessage obtained from user)
+Response:
+```json
+{
+  "cid": "bafy...",
+  "url": "https://storage.example.com/bafy..."
+}
+```
+
+**GET /api/vault/:cid**
+Retrieve document by CID
+
+### Contract Integration
+
+**GET /api/contracts/addresses**
+Get deployed contract addresses
+
+**POST /api/teleporter/send**
+Send cross-chain messages via Teleporter
+
+## Authentication
+
+The API supports API key authentication for development:
+
+```bash
+curl -H "X-API-Key: devkey" http://localhost:4000/v1/relayer/submit
+```
+
+## Data Storage
+
+The API uses file-based storage for development:
+
+- **Jobs**: `data/jobs.json`
+- **HR Requests**: `data/hr-requests.json`
+- **Uploaded Files**: `uploads/` directory
+
+## Integration Examples
+
+### Frontend Integration
+
+```javascript
+// Submit verification request
+const response = await fetch('http://localhost:4000/v1/relayer/submit', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    messageHash: signedMessage.messageHash,
+    signature: signedMessage.signature,
+    meta: {
+      destChainId: 1337001,
+      attestationLevel: 1,
+      nonce: Date.now(),
+      userAddress: userAddress
+    }
+  })
+});
+
+const { jobId } = await response.json();
+```
+
+### HRIS Integration
+
+```javascript
+// Request employee verification
+const verificationRequest = await fetch('http://localhost:4000/api/hr/verification/request', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    employeeId: 'EMP001',
+    employeeName: 'John Doe',
+    department: 'Engineering',
+    requestedLevel: 2
+  })
+});
+```
+
+## Error Handling
+
+The API returns standard HTTP status codes:
+
+- **200**: Success
+- **400**: Bad Request (invalid parameters)
+- **401**: Unauthorized (invalid API key)
+- **404**: Not Found (resource not found)
+- **500**: Internal Server Error
+
+Error responses include descriptive messages:
+
+```json
+{
+  "error": "Invalid signature provided"
+}
+```
+
+## Security Considerations
+
+- Never accept private keys from clients
+- Validate all input parameters and signatures
+- Implement rate limiting for production deployments
+- Use HTTPS in production environments
+- Rotate API keys regularly
+
+## Development Features
+
+The API includes several development-only features:
+
+- Mock relayer operations
+- Test data generation
+- Detailed logging and debugging
+- File-based storage (replace with database in production)
+
+## Production Deployment
+
+For production deployment:
+
+1. Replace file-based storage with proper database
+2. Implement proper authentication and authorization
+3. Add rate limiting and request validation
+4. Configure HTTPS and security headers
+5. Set up monitoring and logging
+6. Implement backup and recovery procedures
+
+## Troubleshooting
+
+**Service Won't Start**:
+- Check port availability
+- Verify environment variables
+- Ensure all dependencies are installed
+
+**Relayer Issues**:
+- Verify blockchain connectivity
+- Check account balances and gas settings
+- Validate signature formats
+
+**Integration Issues**:
+- Verify API endpoints and request formats
+- Check CORS configuration for browser requests
+- Validate contract addresses and network configuration
 await fetch('http://localhost:4000/v1/relayer/submit', {
   method:'POST', headers:{'Content-Type':'application/json','x-api-key':process.env.MODULE3_API_KEY},
   body: JSON.stringify({ network:'us', signedPayload: sig, signerAddress:addr, meta:{destChainId:1337002, requestedLevel:2} })

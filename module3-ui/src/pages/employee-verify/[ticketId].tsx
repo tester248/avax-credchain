@@ -1,16 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { ethers } from 'ethers';
 import Nav from '../../components/Nav';
 import Wallet from '../../components/Wallet';
-import { sdk } from '../../lib/sdk';
+import { getProvider, signVerificationPayload, submitRelayerJob, pollJob } from '../../lib/sdk';
 
-interface VerificationRequest {
-  ticketId: string;
-  employeeId: string;
-  employeeName: string;
-  verificationTypes: string[];
-  status: string;
+// Global declarations for window.ethereum
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
+interface Employee {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  department: string;
+  position: string;
+  status: 'pending' | 'in-progress' | 'verified' | 'failed';
+  backgroundVerificationRequired: boolean;
   createdAt: string;
 }
 
@@ -18,391 +27,503 @@ export default function EmployeeVerifyPage() {
   const router = useRouter();
   const { ticketId } = router.query;
   
-  const [verificationRequest, setVerificationRequest] = useState<VerificationRequest | null>(null);
+  const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationComplete, setVerificationComplete] = useState(false);
-  const [signer, setSigner] = useState<ethers.Signer | null>(null);
+  const [currentStep, setCurrentStep] = useState<'intro' | 'wallet-connect' | 'documents' | 'processing' | 'complete' | 'error'>('intro');
+  const [walletAddress, setWalletAddress] = useState<string>('');
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [activityLog, setActivityLog] = useState<string[]>([]);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
 
-  // Load verification request details
+  const addToActivityLog = (message: string) => {
+    setActivityLog(prev => [`${new Date().toLocaleTimeString()}: ${message}`, ...prev.slice(0, 9)]);
+  };
+
+  // Load employee details from localStorage (POC simulation)
   useEffect(() => {
     if (!ticketId || typeof ticketId !== 'string') return;
     
-    const loadRequest = async () => {
+    const loadEmployee = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/hr/verification/ticket/${ticketId}`);
-        if (!response.ok) {
-          throw new Error('Verification request not found');
+        const stored = localStorage.getItem('credchain-employees');
+        if (stored) {
+          const employees: Employee[] = JSON.parse(stored);
+          const found = employees.find(emp => emp.id === ticketId);
+          if (found) {
+            setEmployee(found);
+            addToActivityLog(`Verification request loaded for ${found.firstName} ${found.lastName}`);
+          } else {
+            setError('Employee verification request not found');
+          }
+        } else {
+          setError('No verification requests found');
         }
-        const data = await response.json();
-        setVerificationRequest(data);
       } catch (err) {
         setError('Invalid or expired verification link');
-        console.error('Error loading verification request:', err);
+        console.error('Error loading employee:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    loadRequest();
+    loadEmployee();
   }, [ticketId]);
 
-  const handleVerification = async () => {
-    if (!signer || !verificationRequest) return;
-
-    setIsVerifying(true);
-    setError('');
-
-    try {
-      // Get user address
-      const userAddress = await signer.getAddress();
-      
-      // Create verification payload
-      const destChainId = 1337001; // credchainus subnet
-      const attestationLevel = 2; // High level verification
-      const nonce = Math.floor(Date.now() / 1000);
-      
-      // Include HR ticket ID in metadata
-      const meta = {
-        destChainId,
-        userAddress,
-        attestationLevel,
-        nonce,
-        hrTicketId: ticketId as string
-      };
-
-      // Submit the verification request
-      const result = await sdk.submitAttestation(signer, meta);
-      
-      if (result.success) {
-        setVerificationComplete(true);
-      } else {
-        setError(result.error || 'Verification failed');
-      }
-    } catch (err) {
-      console.error('Verification error:', err);
-      setError('An error occurred during verification');
-    } finally {
-      setIsVerifying(false);
+  const updateEmployeeStatus = (status: Employee['status']) => {
+    if (!employee) return;
+    
+    const stored = localStorage.getItem('credchain-employees');
+    if (stored) {
+      const employees: Employee[] = JSON.parse(stored);
+      const updatedEmployees = employees.map(emp => 
+        emp.id === employee.id ? { ...emp, status } : emp
+      );
+      localStorage.setItem('credchain-employees', JSON.stringify(updatedEmployees));
+      setEmployee({ ...employee, status });
     }
   };
 
-  const getVerificationTypeDisplayName = (type: string) => {
-    const names: Record<string, string> = {
-      identity: 'Identity Verification',
-      employment: 'Employment History',
-      education: 'Education Verification',
-      criminal: 'Criminal Background Check',
-      credit: 'Credit History Check'
-    };
-    return names[type] || type;
+  const connectWallet = async () => {
+    try {
+      addToActivityLog('Connecting wallet...');
+      const provider = await getProvider();
+      const signer = await provider.getSigner();
+      const address = await signer.getAddress();
+
+      setWalletAddress(address);
+      updateEmployeeStatus('in-progress');
+
+      addToActivityLog(`Wallet connected: ${address.substring(0, 6)}...${address.substring(38)}`);
+      addToActivityLog('ICM message sent to identity registry');
+
+      // Simulate network activity
+      setTimeout(() => {
+        addToActivityLog('Identity verification initiated on-chain');
+        // Always re-check the latest value from localStorage in case admin toggled the flag after onboarding
+        const stored = localStorage.getItem('credchain-employees');
+        let needsDocs = employee?.backgroundVerificationRequired;
+        if (stored && employee) {
+          const employees: Employee[] = JSON.parse(stored);
+          const found = employees.find(emp => emp.id === employee.id);
+          if (found) needsDocs = found.backgroundVerificationRequired;
+        }
+        if (needsDocs) {
+          setCurrentStep('documents');
+          addToActivityLog('Background verification required - requesting documents');
+        } else {
+          setCurrentStep('processing');
+          addToActivityLog('No background verification required - processing identity');
+          processVerification();
+        }
+      }, 1500);
+
+    } catch (err: any) {
+      console.error('Wallet connection failed:', err);
+      addToActivityLog(`Wallet connection failed: ${err.message}`);
+      setError('Failed to connect wallet. Please try again.');
+    }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      newFiles.forEach(file => {
+        addToActivityLog(`Document uploaded: ${file.name}`);
+      });
+    }
+  };
+
+  const removeFile = (index: number) => {
+    const removedFile = uploadedFiles[index];
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+    addToActivityLog(`Document removed: ${removedFile.name}`);
+  };
+
+  const uploadToPinata = async () => {
+    if (uploadedFiles.length === 0) {
+      alert('Please upload at least one document');
+      return;
+    }
+
+    setIsProcessing(true);
+    addToActivityLog('Uploading documents to IPFS via Pinata...');
+
+    try {
+      // Simulate Pinata upload
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const mockHashes = uploadedFiles.map(() => 
+        `Qm${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
+      );
+
+      uploadedFiles.forEach((file, index) => {
+        addToActivityLog(`Document uploaded to IPFS: ${file.name} -> ${mockHashes[index]}`);
+      });
+
+      addToActivityLog('All documents uploaded successfully');
+      addToActivityLog('Background verification API called');
+      
+      setCurrentStep('processing');
+      processVerification();
+
+    } catch (err: any) {
+      addToActivityLog(`Upload failed: ${err.message}`);
+      setError('Failed to upload documents. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const processVerification = async () => {
+    addToActivityLog('Processing identity verification...');
+    
+    try {
+      // Get wallet provider and sign verification payload
+      const provider = await getProvider();
+      const signer = await provider.getSigner();
+      const address = await signer.getAddress();
+      
+      addToActivityLog('Signing verification payload...');
+      const meta = { 
+        destChainId: 1337001, 
+        attestationLevel: employee?.backgroundVerificationRequired ? 2 : 1, 
+        nonce: Math.floor(Date.now()/1000), 
+        userAddress: address 
+      };
+      
+      const signedPayload = await signVerificationPayload(signer, meta);
+      addToActivityLog('Payload signed successfully');
+      
+      // Submit to relayer
+      addToActivityLog('Submitting to relayer...');
+      const result = await submitRelayerJob(signedPayload);
+      setJobId(result.jobId);
+      addToActivityLog(`Relayer job created: ${result.jobId}`);
+      
+      // Poll for completion
+      setVerificationStatus('queued');
+      addToActivityLog('ICM cross-chain verification initiated');
+      
+      let finalStatus: string | null = null;
+      await pollJob(result.jobId, (status) => {
+        setVerificationStatus(status.status);
+        finalStatus = status.status;
+        addToActivityLog(`Verification status: ${status.status}`);
+        
+        if (status.status === 'processing') {
+          addToActivityLog('EU subnet: GDPR compliance verified');
+          addToActivityLog('US subnet: EERC compliance verified');
+          if (employee?.backgroundVerificationRequired) {
+            addToActivityLog('Background verification completed');
+          }
+        }
+      });
+      
+      if (finalStatus === 'done') {
+        addToActivityLog('Identity registry updated');
+        addToActivityLog('Verification attestation signed');
+        addToActivityLog('Cross-chain verification complete');
+        updateEmployeeStatus('verified');
+        setCurrentStep('complete');
+      } else {
+        throw new Error('Verification failed or timed out');
+      }
+      
+    } catch (err: any) {
+      addToActivityLog(`Verification failed: ${err.message}`);
+      updateEmployeeStatus('failed');
+      setCurrentStep('error');
+    }
   };
 
   if (loading) {
     return (
-      <>
+      <div className="container">
         <Nav />
-        <div className="container">
-          <div className="card">
-            <div className="loading-spinner"></div>
-            <p>Loading verification request...</p>
-          </div>
+        <div className="card" style={{ textAlign: 'center', padding: '50px' }}>
+          <h2>Loading verification request...</h2>
         </div>
-      </>
+      </div>
     );
   }
 
-  if (error && !verificationRequest) {
+  if (error) {
     return (
-      <>
+      <div className="container">
         <Nav />
-        <div className="container">
-          <div className="card error">
-            <h2>❌ Invalid Verification Link</h2>
-            <p>{error}</p>
-            <p>Please contact your HR department for a new verification link.</p>
-          </div>
+        <div className="card" style={{ textAlign: 'center', padding: '50px' }}>
+          <h2 style={{ color: '#ef4444' }}>❌ Error</h2>
+          <p>{error}</p>
         </div>
-      </>
+      </div>
     );
   }
 
-  if (verificationComplete) {
+  if (!employee) {
     return (
-      <>
+      <div className="container">
         <Nav />
-        <div className="container">
-          <div className="card success">
-            <h2>✅ Verification Complete</h2>
-            <p>Thank you, <strong>{verificationRequest?.employeeName}</strong>!</p>
-            <p>Your identity has been successfully verified using blockchain technology.</p>
-            <p>Your HR department will be notified of the completed verification.</p>
-            
-            <div className="verification-details">
-              <h3>Verification Types Completed:</h3>
-              <ul>
-                {verificationRequest?.verificationTypes.map((type, index) => (
-                  <li key={index}>✓ {getVerificationTypeDisplayName(type)}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
+        <div className="card" style={{ textAlign: 'center', padding: '50px' }}>
+          <h2 style={{ color: '#ef4444' }}>Employee not found</h2>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="container">
       <Nav />
-      <div className="container">
-        <div className="verification-header">
-          <h1>🔐 Employee Identity Verification</h1>
-          <p>Secure blockchain-based verification for {verificationRequest?.employeeName}</p>
-        </div>
-
-        <div className="verification-content">
-          <div className="card verification-details">
-            <h2>Verification Request Details</h2>
-            <div className="detail-row">
-              <label>Employee ID:</label>
-              <span>{verificationRequest?.employeeId}</span>
-            </div>
-            <div className="detail-row">
-              <label>Employee Name:</label>
-              <span>{verificationRequest?.employeeName}</span>
-            </div>
-            <div className="detail-row">
-              <label>Request Date:</label>
-              <span>{verificationRequest?.createdAt ? new Date(verificationRequest.createdAt).toLocaleDateString() : 'N/A'}</span>
-            </div>
-            
-            <h3>Verification Types Required:</h3>
-            <ul className="verification-types">
-              {verificationRequest?.verificationTypes.map((type, index) => (
-                <li key={index} className="verification-type">
-                  <span className="type-icon">🔍</span>
-                  {getVerificationTypeDisplayName(type)}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="card verification-action">
-            <h2>Complete Your Verification</h2>
-            <p>Connect your wallet and sign the verification request to complete the process.</p>
-            
-            <Wallet onSignerChange={setSigner} />
-            
-            {signer && (
-              <div className="verification-step">
-                <h3>Ready to Verify</h3>
-                <p>Click the button below to sign your verification request with your connected wallet.</p>
+      
+      <div className="row">
+        <div className="col" style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <div className="card">
+            {currentStep === 'intro' && (
+              <div style={{ textAlign: 'center', padding: '40px' }}>
+                <h2>👋 Welcome, {employee.firstName}!</h2>
+                <p style={{ fontSize: '16px', color: '#6b7280', marginBottom: '30px' }}>
+                  Please complete your identity verification to gain access to the CredChain network.
+                </p>
+                <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '8px', marginBottom: '30px' }}>
+                  <h3>Verification Details</h3>
+                  <div style={{ textAlign: 'left', marginTop: '15px' }}>
+                    <p><strong>Name:</strong> {employee.firstName} {employee.lastName}</p>
+                    <p><strong>Email:</strong> {employee.email}</p>
+                    <p><strong>Department:</strong> {employee.department || 'N/A'}</p>
+                    <p><strong>Position:</strong> {employee.position || 'N/A'}</p>
+                    <p><strong>Background Verification:</strong> {employee.backgroundVerificationRequired ? '✓ Required' : 'Not Required'}</p>
+                  </div>
+                </div>
                 <button 
-                  onClick={handleVerification}
-                  disabled={isVerifying}
-                  className="btn-primary verification-btn"
+                  className="btn"
+                  onClick={() => setCurrentStep('wallet-connect')}
+                  style={{ fontSize: '16px', padding: '12px 24px' }}
                 >
-                  {isVerifying ? (
-                    <>
-                      <div className="loading-spinner small"></div>
-                      Verifying...
-                    </>
-                  ) : (
-                    '🔐 Sign & Complete Verification'
-                  )}
+                  Start Verification Process
                 </button>
               </div>
             )}
 
-            {error && (
-              <div className="error-message">
-                <p>❌ {error}</p>
+            {currentStep === 'wallet-connect' && (
+              <div style={{ textAlign: 'center', padding: '48px 24px 36px 24px' }}>
+                <h2>🔗 Connect Your Wallet</h2>
+                <p style={{ fontSize: '16px', color: '#6b7280', margin: '12px 0 26px' }}>
+                  Connect your wallet to verify your identity on the Avalanche network.
+                </p>
+                <div style={{ maxWidth: '440px', margin: '0 auto', padding:'8px 0' }}>
+                  <Wallet />
+                </div>
+                
+                <div style={{ marginTop: '28px' }}>
+                  <button 
+                    className="btn"
+                    onClick={connectWallet}
+                    style={{ fontSize: '16px', padding: '12px 24px' }}
+                  >
+                    Continue with Connected Wallet
+                  </button>
+                </div>
+                
+                {walletAddress && (
+                  <div style={{ backgroundColor: '#10b981', color: 'white', padding: '12px 14px', borderRadius: '6px', marginTop: '18px', fontSize:14 }}>
+                    ✅ Wallet Connected: {walletAddress.substring(0, 6)}...{walletAddress.substring(38)}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {currentStep === 'documents' && (
+              <div style={{ padding: '40px' }}>
+                <h2 style={{ textAlign: 'center' }}>📄 Document Upload</h2>
+                <p style={{ textAlign: 'center', fontSize: '16px', color: '#6b7280', marginBottom: '30px' }}>
+                  Background verification is required. Please upload your identity documents.
+                </p>
+                
+                <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
+                  <h3>Required Documents</h3>
+                  <ul style={{ textAlign: 'left', marginTop: '10px' }}>
+                    <li>Government-issued ID (Passport, Driver's License, etc.)</li>
+                    <li>Proof of address (Utility bill, Bank statement, etc.)</li>
+                    <li>Educational certificates (if applicable)</li>
+                  </ul>
+                </div>
+
+                <div style={{ border: '2px dashed #d1d5db', borderRadius: '8px', padding: '40px', textAlign: 'center', marginBottom: '20px' }}>
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={handleFileUpload}
+                    style={{ display: 'none' }}
+                    id="file-upload"
+                  />
+                  <label htmlFor="file-upload" style={{ cursor: 'pointer' }}>
+                    <div style={{ fontSize: '48px', marginBottom: '10px' }}>📎</div>
+                    <p>Click to upload documents or drag and drop</p>
+                    <p className="small">Supports PDF, JPG, PNG files</p>
+                  </label>
+                </div>
+
+                {uploadedFiles.length > 0 && (
+                  <div style={{ marginBottom: '20px' }}>
+                    <h4>Uploaded Files:</h4>
+                    {uploadedFiles.map((file, index) => (
+                      <div key={index} style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        backgroundColor: '#f0f9ff',
+                        padding: '10px',
+                        borderRadius: '4px',
+                        marginBottom: '5px'
+                      }}>
+                        <span>📄 {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                        <button 
+                          onClick={() => removeFile(index)}
+                          style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                        >
+                          ❌
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div style={{ textAlign: 'center' }}>
+                  <button 
+                    className="btn"
+                    onClick={uploadToPinata}
+                    disabled={uploadedFiles.length === 0 || isProcessing}
+                    style={{ fontSize: '16px', padding: '12px 24px' }}
+                  >
+                    {isProcessing ? 'Uploading...' : 'Upload Documents & Continue'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {currentStep === 'processing' && (
+              <div style={{ textAlign: 'center', padding: '40px' }}>
+                <h2>⏳ Processing Verification</h2>
+                <p style={{ fontSize: '16px', color: '#6b7280', marginBottom: '30px' }}>
+                  Your identity is being verified across the Avalanche network. This may take a few moments.
+                </p>
+                
+                {jobId && (
+                  <div style={{ backgroundColor: '#f0f9ff', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
+                    <div className="small">Job ID: <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{jobId}</span></div>
+                    <div className="small">Status: <span style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>{verificationStatus || 'Initializing'}</span></div>
+                  </div>
+                )}
+                
+                <div style={{ 
+                  width: '60px', 
+                  height: '60px', 
+                  border: '4px solid #e5e7eb',
+                  borderTop: '4px solid #7c3aed',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  margin: '0 auto 30px'
+                }}></div>
+                <style jsx>{`
+                  @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                `}</style>
+                <p className="small">Please do not close this window while verification is in progress.</p>
+              </div>
+            )}
+
+            {currentStep === 'complete' && (
+              <div style={{ textAlign: 'center', padding: '40px' }}>
+                <h2 style={{ color: '#10b981' }}>✅ Verification Complete!</h2>
+                <p style={{ fontSize: '16px', color: '#6b7280', marginBottom: '30px' }}>
+                  Congratulations! Your identity has been successfully verified on the CredChain network.
+                </p>
+                <div style={{ backgroundColor: '#f0f9ff', padding: '20px', borderRadius: '8px', marginBottom: '30px' }}>
+                  <h3>Next Steps</h3>
+                  <p style={{ textAlign: 'left', marginTop: '10px' }}>
+                    1. You now have access to the CredChain enterprise network<br/>
+                    2. Your verified credentials are stored securely on-chain<br/>
+                    3. HR will be notified of your successful verification<br/>
+                    4. You can access company resources using your connected wallet
+                  </p>
+                </div>
+                <button 
+                  className="btn"
+                  onClick={() => router.push('/dashboard')}
+                  style={{ fontSize: '16px', padding: '12px 24px' }}
+                >
+                  Go to Dashboard
+                </button>
+              </div>
+            )}
+
+            {currentStep === 'error' && (
+              <div style={{ textAlign: 'center', padding: '40px' }}>
+                <h2 style={{ color: '#ef4444' }}>❌ Verification Failed</h2>
+                <p style={{ fontSize: '16px', color: '#6b7280', marginBottom: '30px' }}>
+                  There was an issue verifying your identity. Please contact HR for assistance.
+                </p>
+                <button 
+                  className="btn ghost"
+                  onClick={() => {
+                    setCurrentStep('intro');
+                    setWalletAddress('');
+                    setUploadedFiles([]);
+                    setError('');
+                    updateEmployeeStatus('pending');
+                  }}
+                  style={{ fontSize: '16px', padding: '12px 24px' }}
+                >
+                  Try Again
+                </button>
               </div>
             )}
           </div>
         </div>
-
-        <div className="card info-section">
-          <h3>🛡️ How This Works</h3>
-          <ol>
-            <li><strong>Secure Connection:</strong> Connect your wallet (MetaMask, Core Wallet, etc.)</li>
-            <li><strong>Digital Signature:</strong> Sign a verification message with your private key</li>
-            <li><strong>Blockchain Verification:</strong> Your identity is verified using Avalanche technology</li>
-            <li><strong>HR Notification:</strong> Your HR department receives instant verification confirmation</li>
-          </ol>
-          
-          <p className="security-note">
-            🔒 <strong>Privacy & Security:</strong> No personal information is stored on the blockchain. 
-            Only cryptographic proof of your identity verification is recorded.
-          </p>
+        
+        {/* Activity Log */}
+        <div className="col" style={{ maxWidth: '400px' }}>
+          <div className="card">
+            <h3>🔍 Technical Activity</h3>
+            <div style={{ 
+              height: '400px', 
+              overflowY: 'auto', 
+              backgroundColor: '#f8fafc', 
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '10px',
+              marginTop: '10px',
+              fontFamily: 'monospace',
+              fontSize: '12px'
+            }}>
+              {activityLog.map((log, index) => (
+                <div 
+                  key={index}
+                  style={{ 
+                    padding: '4px 0',
+                    borderBottom: index < activityLog.length - 1 ? '1px solid #e2e8f0' : 'none',
+                    color: '#374151'
+                  }}
+                >
+                  {log}
+                </div>
+              ))}
+              {activityLog.length === 0 && (
+                <div style={{ textAlign: 'center', color: '#6b7280', marginTop: '50px' }}>
+                  Activity will appear here...
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .container {
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 2rem;
-        }
-
-        .verification-header {
-          text-align: center;
-          margin-bottom: 2rem;
-        }
-
-        .verification-header h1 {
-          font-size: 2.5rem;
-          margin-bottom: 0.5rem;
-          background: linear-gradient(135deg, var(--primary), var(--accent));
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-
-        .verification-content {
-          display: grid;
-          gap: 2rem;
-          margin-bottom: 2rem;
-        }
-
-        @media (min-width: 768px) {
-          .verification-content {
-            grid-template-columns: 1fr 1fr;
-          }
-        }
-
-        .detail-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0.75rem 0;
-          border-bottom: 1px solid var(--border);
-        }
-
-        .detail-row label {
-          font-weight: 600;
-          color: var(--text-secondary);
-        }
-
-        .detail-row span {
-          font-weight: 500;
-        }
-
-        .verification-types {
-          list-style: none;
-          padding: 0;
-          margin: 1rem 0;
-        }
-
-        .verification-type {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 0.5rem;
-          margin: 0.25rem 0;
-          background: var(--background-secondary);
-          border-radius: 0.5rem;
-          border: 1px solid var(--border);
-        }
-
-        .type-icon {
-          font-size: 1.25rem;
-        }
-
-        .verification-step {
-          margin-top: 1.5rem;
-          padding: 1.5rem;
-          background: var(--background-secondary);
-          border-radius: 0.75rem;
-          border: 1px solid var(--border);
-        }
-
-        .verification-btn {
-          width: 100%;
-          padding: 1rem 2rem;
-          font-size: 1.1rem;
-          font-weight: 600;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          margin-top: 1rem;
-        }
-
-        .verification-btn:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-        }
-
-        .info-section ol {
-          margin: 1rem 0;
-          padding-left: 1.5rem;
-        }
-
-        .info-section li {
-          margin: 0.75rem 0;
-          line-height: 1.6;
-        }
-
-        .security-note {
-          margin-top: 1.5rem;
-          padding: 1rem;
-          background: var(--background-secondary);
-          border-radius: 0.5rem;
-          border: 1px solid var(--border);
-          font-size: 0.95rem;
-          line-height: 1.6;
-        }
-
-        .card.success {
-          background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
-          border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .card.error {
-          background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
-          border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .verification-details ul {
-          margin: 1rem 0;
-        }
-
-        .verification-details li {
-          margin: 0.5rem 0;
-          color: var(--success);
-          font-weight: 500;
-        }
-
-        .loading-spinner {
-          display: inline-block;
-          width: 20px;
-          height: 20px;
-          border: 2px solid var(--border);
-          border-radius: 50%;
-          border-top-color: var(--primary);
-          animation: spin 1s ease-in-out infinite;
-        }
-
-        .loading-spinner.small {
-          width: 16px;
-          height: 16px;
-        }
-
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-
-        .error-message {
-          margin-top: 1rem;
-          padding: 1rem;
-          background: rgba(239, 68, 68, 0.1);
-          border: 1px solid rgba(239, 68, 68, 0.3);
-          border-radius: 0.5rem;
-          color: var(--error);
-        }
-      `}</style>
-    </>
+    </div>
   );
 }

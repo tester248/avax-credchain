@@ -1,103 +1,208 @@
-# Module 2 — OnChain (Smart Contracts & Cross-Chain)
+# Smart Contracts Module
 
-This folder contains the OnChain module for CredentialChain: smart contracts, unit tests, deployment scripts, and integration notes for other modules (Infra, App).
+This module contains the core smart contracts, deployment scripts, and testing infrastructure for the CredChain credential verification system.
 
-## Current Implementation Status ✅
+## Overview
 
-### ✅ FULLY IMPLEMENTED AND DEPLOYED
-- **IdentityRegistry.sol** — ✅ register identities (stores IPFS CID and jurisdiction, consent flags). Uses AccessControl.
-- **VerificationAttestor.sol** — ✅ create attestations by verifiers. Emits AttestationCreated events.
-- **CrossChainRouter.sol** — ✅ integrates with a Teleporter messenger to request verification across subnets and emit responses.
-- **ReputationOracle.sol** — ✅ **IMPLEMENTED** contract for aggregating verifier reputations
-- **FeeToken.sol** — ✅ **IMPLEMENTED** ERC20 token for fee payments and sponsored transactions
-- **TeleporterMock.sol** — ✅ a local mock Teleporter for development that can deliver messages to target router contracts
+The smart contracts module implements the core blockchain logic for:
 
-### ✅ DEPLOYMENT STATUS: FULLY SUCCESSFUL
-All contracts have been successfully deployed to both subnets with working addresses. The deploy-multi.ts script works perfectly and handles all contracts gracefully.
+- Identity registration and management
+- Credential verification and attestation
+- Cross-chain communication via Avalanche ICM
+- Reputation tracking and validation
+- Fee token management and sponsored transactions
 
-**Deployed Contract Addresses:**
+## Contract Architecture
 
-**US Subnet (1337001):**
-- IdentityRegistry: `0x7B4982e1F7ee384F206417Fb851a1EB143c513F9`
-- VerificationAttestor: `0xB8a934dcb74d0E3d1DF6Bce0faC12cD8B18801eD`
-- CrossChainRouter: `0x8B3BC4270BE2abbB25BC04717830bd1Cc493a461`
-- ReputationOracle: `0x55a4eDd8A2c051079b426E9fbdEe285368824a89`
-- FeeToken: `0xa1E47689f396fED7d18D797d9D31D727d2c0d483`
-- TeleporterMock: `0x565497a1B67adc1305806804b5A93C44C545CbDC`
+### Core Contracts
 
-**EU Subnet (1337002):**
-- IdentityRegistry: `0xF5f1f185cF359dC48469e410Aeb6983cD4DC5812`
-- VerificationAttestor: `0x97C0FE6aB595cbFD50ad3860DA5B2017d8B35c2E`
-- CrossChainRouter: `0xe17bDC68168d07c1776c362d596adaa5d52A1De7`
-- ReputationOracle: `0x768AF58E63775354938e9F3FEdB764F601c038b4`
-- FeeToken: `0xCB5bf91D236ebe6eF6AE57342570884234bd11Cc`
-- TeleporterMock: `0x7632DD35AeaFC5A4a1AAA36493B7F8E4D84B15E2`
+**IdentityRegistry.sol**: Central registry for identity management
+- Stores identity metadata with IPFS CID references
+- Manages jurisdiction and consent flags
+- Implements access control for identity operations
 
-## Quickstart (local dev)
+**VerificationAttestor.sol**: Handles credential verification workflows
+- Creates and manages attestations from verified sources
+- Emits attestation events for off-chain tracking
+- Integrates with reputation scoring system
 
-1. Install dependencies
+**CrossChainRouter.sol**: Manages cross-chain communication
+- Integrates with Avalanche ICM Teleporter protocol
+- Routes verification requests across subnets
+- Handles cross-chain response processing
+
+**ReputationOracle.sol**: Aggregates verifier reputation data
+- Tracks verifier performance metrics
+- Implements reputation scoring algorithms
+- Provides reputation data for attestation validation
+
+**FeeToken.sol**: Custom ERC20 token for system operations
+- Handles transaction fees and sponsored transactions
+- Implements token-based incentive mechanisms
+- Supports cross-chain fee payments
+
+**TeleporterMock.sol**: Development mock for ICM testing
+- Simulates Teleporter functionality for local development
+- Enables end-to-end testing without full ICM deployment
+
+## Deployed Contracts
+
+Current deployment on credchainus subnet (Chain ID: 1337001):
+
+- **TeleporterMock**: `0x4Ac1d98D9cEF99EC6546dEd4Bd550b0b287aaD6D`
+- **CrossChainRouter**: `0xA4cD3b0Eb6E5Ab5d8CE4065BcCD70040ADAB1F00`
+- **IdentityRegistry**: `0xa4DfF80B4a1D748BF28BC4A271eD834689Ea3407`
+- **VerificationAttestor**: `0x95CA0a568236fC7413Cd2b794A7da24422c2BBb6`
+- **FeeToken**: `0x789a5FDac2b37FCD290fb2924382297A6AE65860`
+
+## Installation
+
+Install dependencies from the onchain directory:
 
 ```bash
 cd onchain
 npm install
 ```
 
-2. Compile & run tests
+## Development
+
+### Compile Contracts
 
 ```bash
 npx hardhat compile
+```
+
+### Run Tests
+
+```bash
 npx hardhat test
 ```
 
-3. ✅ **ALREADY DONE**: Multi-network deployment
+### Deploy Contracts
 
-The contracts are already deployed! But you can redeploy if needed:
+Deploy to the configured credchainus network:
 
 ```bash
-export DEPLOYER_PRIVATE_KEY="0x56289e99c94b6912bfc12adc093c9b51124f0dc54ac7a766b2bc5ccf558d8027"
+npx hardhat run scripts/deploy.ts --network credchainus
+```
+
+For multi-network deployment:
+
+```bash
 npx ts-node scripts/deploy-multi.ts
 ```
 
-This deploys all contracts to both subnets and writes `onchain/artifacts/{us,eu}.json` with addresses and ABIs.
+## Deployment Scripts
 
-## Multi-network deploy (deploy to infra RPCs)
+**deploy.ts**: Single network deployment script
+- Deploys all contracts to specified network
+- Configures contract interactions and permissions
+- Generates deployment artifacts
 
-**✅ STATUS: COMPLETED SUCCESSFULLY**
+**deploy-multi.ts**: Multi-network deployment script
+- Reads network configuration from `infra/endpoints.json`
+- Deploys contracts across multiple subnets
+- Writes artifacts for each network
 
-The multi-network deployment has been tested and works perfectly:
-- Reads `infra/endpoints.json` with RPC configurations ✅
-- Uses pre-funded ewoq account ✅ 
-- Deploys all contracts to both subnets ✅
-- Writes artifacts to `onchain/artifacts/{network}.json` ✅
-- Handles existing teleporter addresses from `infra/teleporter.json` ✅
+**export-artifacts.ts**: Artifact export utility
+- Copies compiled artifacts to shared directory
+- Organizes artifacts by network and contract type
 
-## Integration checklist (mapping to onboarding acceptance criteria)
+**generate-shared-artifacts.ts**: Shared artifact generator
+- Consolidates contract addresses across networks
+- Extracts ABIs for frontend integration
+- Creates unified configuration files
 
-- [x] **✅ COMPLETE**: `infra/endpoints.json` exists with `us`/`eu` RPC configurations
-- [x] **✅ COMPLETE**: `npm run deploy:multi` deploys all contracts and writes artifacts
-- [x] **✅ COMPLETE**: CrossChainRouter integrates with Teleporter for cross-chain messaging
-- [x] **✅ COMPLETE**: ReputationOracle implementation
-- [x] **✅ COMPLETE**: FeeToken implementation  
-- [x] **✅ COMPLETE**: All contract compilation and deployment working
+## Configuration
 
-## Integration points
+### Network Configuration
 
-- **✅ infra/endpoints.json (input)**: Working file with RPC endpoints:
+The deployment system reads network configuration from `infra/endpoints.json`:
 
 ```json
 {
-  "us": { "chainId": "1337001", "subnetId": "credchainus", "rpc": "http://127.0.0.1:9650/ext/bc/C/rpc", "teleporterAddr": "0x565497a1B67adc1305806804b5A93C44C545CbDC" },
-  "eu": { "chainId": "1337002", "subnetId": "credchaineu", "rpc": "http://127.0.0.1:9652/ext/bc/C/rpc", "teleporterAddr": "0x7632DD35AeaFC5A4a1AAA36493B7F8E4D84B15E2" }
+  "credchainus": {
+    "chainId": "1337001",
+    "subnetId": "credchainus",
+    "rpc": "http://127.0.0.1:35885/ext/bc/3XbrmCiJw54WYP1WKiKV4sxX1mpjmc3WJapRZ78rwCgYt2kuQ/rpc",
+    "teleporterAddr": "0x253b2784c75e510dD0fF1da844684a1aC0aa5fcf"
+  }
 }
 ```
 
-- **✅ onchain/artifacts/{network}.json (output)**: Successfully generated deployment artifacts:
+### Hardhat Configuration
 
-```json
-{
-  "teleporter": "0x565497a1B67adc1305806804b5A93C44C545CbDC",
-  "router": "0x8B3BC4270BE2abbB25BC04717830bd1Cc493a461", 
-  "identityRegistry": "0x7B4982e1F7ee384F206417Fb851a1EB143c513F9",
+The `hardhat.config.ts` file defines:
+- Network settings for local and testnet deployment
+- Compiler configuration and optimization settings
+- TypeChain generation settings
+- Testing and verification parameters
+
+## Integration Points
+
+### Input Dependencies
+- **infra/endpoints.json**: Network RPC endpoints and configuration
+- **infra/teleporter.json**: ICM Teleporter contract addresses
+
+### Output Artifacts
+- **artifacts/{network}.json**: Per-network deployment addresses
+- **shared/onchain-artifacts/addresses.json**: Consolidated address mapping
+- **shared/onchain-artifacts/abis/**: Contract ABI files for frontend integration
+
+## Testing
+
+The test suite includes:
+
+- Unit tests for individual contract functionality
+- Integration tests for cross-contract interactions
+- Mock testing for ICM Teleporter integration
+- Gas optimization and security tests
+
+Run specific test categories:
+
+```bash
+# Run all tests
+npx hardhat test
+
+# Run specific test file
+npx hardhat test test/IdentityRegistry.test.ts
+
+# Run tests with gas reporting
+REPORT_GAS=true npx hardhat test
+```
+
+## Security Considerations
+
+- All contracts implement OpenZeppelin's AccessControl for permission management
+- Input validation and bounds checking on all public functions
+- Reentrancy protection on state-changing operations
+- Event emission for all critical operations for off-chain monitoring
+
+## Gas Optimization
+
+The contracts are optimized for gas efficiency:
+
+- Use of packed structs to minimize storage slots
+- Efficient data structures and algorithms
+- Minimized external calls and loops
+- Proper use of view and pure functions
+
+## Troubleshooting
+
+**Compilation Issues**:
+- Ensure Solidity version compatibility
+- Check import paths and dependency versions
+- Verify OpenZeppelin contract versions
+
+**Deployment Failures**:
+- Verify network configuration and RPC connectivity
+- Check account balance and gas settings
+- Ensure proper private key configuration
+
+**Integration Issues**:
+- Verify artifact generation and export processes
+- Check contract address consistency across modules
+- Validate ABI compatibility with frontend integration
   "attestor": "0xB8a934dcb74d0E3d1DF6Bce0faC12cD8B18801eD",
   "oracle": "0x55a4eDd8A2c051079b426E9fbdEe285368824a89",
   "feeToken": "0xa1E47689f396fED7d18D797d9D31D727d2c0d483",

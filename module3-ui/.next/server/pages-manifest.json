@@ -2,8 +2,7 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js",
-  "/verify": "pages/verify.js",
-  "/admin": "pages/admin.js",
-  "/vault": "pages/vault.js"
+  "/admin-poc": "pages/admin-poc.js",
+  "/employee-verify/[ticketId]": "pages/employee-verify/[ticketId].js",
+  "/dashboard": "pages/dashboard.js"
 }

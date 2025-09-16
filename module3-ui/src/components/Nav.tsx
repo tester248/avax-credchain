@@ -12,10 +12,10 @@ export default function Nav(){
         </div>
       </div>
       <div className="controls">
-        <Link href="/" className="btn ghost">Home</Link>
+        <Link href="/dashboard" className="btn">Dashboard</Link>
+        <Link href="/admin-poc" className="btn ghost">Admin/Debug</Link>
         <Link href="/verify" className="btn ghost">Verify</Link>
-        <Link href="/admin" className="btn ghost">Admin</Link>
-        <Link href="/icm-demo" className="btn">ICM Demo</Link>
+        <Link href="/admin" className="btn ghost">Legacy Admin</Link>
         <Link href="/vault" className="btn ghost">Vault</Link>
       </div>
     </div>
